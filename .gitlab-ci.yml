@@ -7,75 +7,100 @@ cache:
 stages:
   - test
 
-before_script:
-  - bash -c "npm install && npm run copy"
-
 typings:
   stage: test
   script:
+    - npm install
+    - npm run copy
     - npm run typings
 
 typings:
   stage: test
   script:
+    - npm install
+    - npm run copy
     - npm run typings
 
 babylon:
   stage: test
   script:
+    - npm install
+    - npm run copy
     - npm run babylon
 
 babylon.d:
   stage: test
   script:
+    - npm install
+    - npm run copy
     - npm run babylon.d
 
 vscode:
   stage: test
   script:
+    - npm install
+    - npm run copy
     - npm run vscode
 
 vscode.d:
   stage: test
   script:
+    - npm install
+    - npm run copy
     - npm run vscode.d
 
 groceries:
   stage: test
   script:
+    - npm install
+    - npm run copy
     - npm run groceries
 
 groceries.d:
   stage: test
   script:
+    - npm install
+    - npm run copy
     - npm run groceries.d
 
 glimmer:
   stage: test
   script:
+    - npm install
+    - npm run copy
     - npm run glimmer
 
 glimmer.d:
   stage: test
   script:
+    - npm install
+    - npm run copy
     - npm run glimmer.d
 
 nativescript:
   stage: test
   script:
+    - npm install
+    - npm run copy
     - npm run nativescript
 
 nativescript.d:
   stage: test
   script:
+    - npm install
+    - npm run copy
     - npm run nativescript.d
 
 angular:
   stage: test
   script:
+    - npm install
+    - npm run copy
     - npm run angular
 
 angular.d:
   stage: test
   script:
+    - npm install
+    - npm run copy
     - npm run angular.d
