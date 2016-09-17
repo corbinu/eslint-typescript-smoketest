@@ -8,7 +8,7 @@ stages:
   - test
 
 before_script:
-  - npm install --development
+  - NODE_ENV=development npm install
   - npm run copy
 
 typings:
