@@ -1,19 +1,11 @@
 image: corbinu/alpine-node-builder:base
 
 stages:
-  - install
-  - copy
   - test
 
-install:
-  stage: install
-  script:
-    - npm install
-
-copy:
-  stage: copy
-  script:
-    - npm run copy
+before_script:
+  - npm run install
+  - npm run copy
 
 typings:
   stage: test
