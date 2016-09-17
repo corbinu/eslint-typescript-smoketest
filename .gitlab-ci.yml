@@ -1,4 +1,4 @@
-image: mhart/alpine-node:latest
+image: corbinu/alpine-node-builder:base
 
 stages:
   - install
