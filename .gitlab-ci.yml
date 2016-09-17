@@ -4,8 +4,7 @@ stages:
   - test
 
 before_script:
-  - npm install
-  - npm run copy
+  - npm install && npm run copy
 
 typings:
   stage: test
