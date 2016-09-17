@@ -1,6 +1,12 @@
 # eslint-typescript-smoketest
 
+[![build status](https://gitlab.com/corbinu/eslint-typescript-smoketest/badges/master/build.svg)](https://gitlab.com/corbinu/eslint-typescript-smoketest/commits/master)
+
 Smoketests eslint-typescript-parser against a set of large/popular typescript projects
+
+* This project is mirrored every hour to/from github your welcome to open a PR here
+* [View/Open Isses](https://gitlab.com/corbinu/eslint-typescript-smoketest/issues)
+* [View Tests](https://gitlab.com/corbinu/eslint-typescript-smoketest/pipelines)
 
 ## Install
 - npm install
