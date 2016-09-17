@@ -1,10 +1,14 @@
 image: corbinu/alpine-node-builder:base
 
+cache:
+  paths:
+  - node_modules/
+
 stages:
   - test
 
 before_script:
-  - npm install && npm run copy
+  - bash -c "npm install && npm run copy"
 
 typings:
   stage: test
