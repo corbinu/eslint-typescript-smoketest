@@ -1,0 +1,45 @@
+{
+  "name": "eslint-typescript-smoketest",
+  "version": "0.1.0",
+  "description": "Smoke tests for eslint-typescript-parser using code from large typescript projects",
+  "main": "index.js",
+  "devDependencies": {
+    "copy": "^0.3.0",
+    "eslint": "^3.5.0",
+    "eslint-plugin-typescript": "0.0.1",
+    "fs-extra": "^0.30.0",
+    "typescript": "^1.8.10",
+    "typescript-eslint-parser": "git+https://github.com/eslint/typescript-eslint-parser.git"
+  },
+  "scripts": {
+    "copy": "node bin/copy.js",
+    "babylon": "eslint \"src/babylon/**/*.ts\"",
+    "babylon.d": "eslint \"src/babylon/**/*.d.ts\"",
+    "vscode": "eslint \"src/vscode/**/*.ts\"",
+    "vscode.d": "eslint \"src/vscode/**/*.d.ts\"",
+    "groceries": "eslint \"src/nativescript-sample-groceries/**/*.ts\"",
+    "groceries.d": "eslint \"src/nativescript-sample-groceries/**/*.d.ts\"",
+    "glimmer": "eslint \"src/glimmer/**/*.ts\"",
+    "glimmer.d": "eslint \"src/glimmer.d/**/*.d.ts\"",
+    "nativescript": "eslint \"src/nativescript/**/*.ts\"",
+    "nativescript.d": "eslint \"src/nativescript/**/*.d.ts\"",
+    "angular": "eslint \"src/angular/**/*.ts\"",
+    "angular.d": "eslint \"src/angular/**/*.d.ts\"",
+    "typings": "eslint \"src/typings/**/*.d.ts\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://gitlab.com/corbinu/eslint-typescript-parser.git"
+  },
+  "keywords": [
+    "smoketest",
+    "eslint",
+    "typescript"
+  ],
+  "author": "Corbin Uselton <c@decimal.io>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://gitlab.com/corbinu/eslint-typescript-parser/issues"
+  },
+  "homepage": "https://gitlab.com/corbinu/eslint-typescript-parser#README"
+}

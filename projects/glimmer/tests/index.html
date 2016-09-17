@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Glimmer Test Suite</title>
+  <link rel="stylesheet" href="qunit.css">
+</head>
+<body>
+  <div id="qunit"></div>
+  <div id="qunit-fixture"></div>
+  <script src="qunit.js"></script>
+  <script src="/testem.js"></script>
+  <script src="../assets/loader.js"></script>
+  <script>loader.noConflict({ define: 'enifed' });</script>
+  <!--<script src="export-test-results.js"></script>-->
+  <script src="/amd/glimmer-common.amd.js"></script>
+  <script src="/amd/glimmer-compiler.amd.js"></script>
+  <script src="/amd/glimmer-runtime.amd.js"></script>
+  <script src="/amd/glimmer-tests.amd.js"></script>
+  <script src="/amd/tests.amd.js"></script>
+
+  <style>
+    #qunit-tests.hidepass li.skipped {
+      display: none;
+    }
+  </style>
+
+  <script>
+    QUnit.config.urlConfig.push({ id: 'nojshint', label: "No JSHint"});
+
+    function getPackagesToTest() {
+      if (QUnit.urlParams.packages) {
+        return QUnit.urlParams.packages.split(',');
+      }
+    }
+
+    // Recursively merge all the dependencies for this configuration of
+    // packages to ensure that we only inject each dependency once.
+    // Testing dependencies are only injected for the packages being tested.
+    var packagesToTest = getPackagesToTest();
+  </script>
+
+  <script>
+    var testMatch;
+    if (packagesToTest) {
+      testMatch = new RegExp("^(" + packagesToTest.join("|") + ").*(-test|.tslint)$");
+    } else {
+      testMatch = /(\-test|.tslint)$/;
+    }
+
+    Object.keys(requireModule.entries).forEach(function(entry) {
+      if (entry.match(testMatch)) {
+        requireModule(entry)
+      };
+    });
+  </script>
+</body>
+</html>

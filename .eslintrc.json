@@ -1,0 +1,17 @@
+{
+	"parserOptions": {
+		"sourceType": "module"
+	},
+	"parser": "typescript-eslint-parser",
+	"plugins": [
+		"typescript"
+	],
+	"env": {
+		"node": true,
+		"es6": true
+	},
+	"rules": {
+		"typescript/type-annotation-spacing": 2
+	},
+	"extends": "eslint:recommended"
+}

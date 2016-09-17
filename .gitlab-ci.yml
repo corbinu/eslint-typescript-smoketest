@@ -1,0 +1,86 @@
+image: mhart/alpine-node:latest
+
+stages:
+  - install
+  - copy
+  - test
+
+install:
+  stage: install
+  script:
+    - npm install
+
+copy:
+  stage: copy
+  script:
+    - npm run copy
+
+typings:
+  stage: test
+  script:
+    - npm run typings
+
+typings:
+  stage: test
+  script:
+    - npm run typings
+
+babylon:
+  stage: test
+  script:
+    - npm run babylon
+
+babylon.d:
+  stage: test
+  script:
+    - npm run babylon.d
+
+vscode:
+  stage: test
+  script:
+    - npm run vscode
+
+vscode.d:
+  stage: test
+  script:
+    - npm run vscode.d
+
+groceries:
+  stage: test
+  script:
+    - npm run groceries
+
+groceries.d:
+  stage: test
+  script:
+    - npm run groceries.d
+
+glimmer:
+  stage: test
+  script:
+    - npm run glimmer
+
+glimmer.d:
+  stage: test
+  script:
+    - npm run glimmer.d
+
+nativescript:
+  stage: test
+  script:
+    - npm run nativescript
+
+nativescript.d:
+  stage: test
+  script:
+    - npm run nativescript.d
+
+angular:
+  stage: test
+  script:
+    - npm run angular
+
+angular.d:
+  stage: test
+  script:
+    - npm run angular.d
