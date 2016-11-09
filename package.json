@@ -6,9 +6,9 @@
     "devDependencies": {
         "copy": "^0.3.0",
         "eslint": "^3.5.0",
-        "eslint-plugin-typescript": "0.0.1",
-        "fs-extra": "^0.30.0",
-        "typescript": "^1.8.10",
+        "eslint-plugin-typescript": "^0.1.0",
+        "fs-extra": "^1.0.0",
+        "typescript": "^2.0.8",
         "typescript-eslint-parser": "git+https://github.com/eslint/typescript-eslint-parser.git"
     },
     "scripts": {
