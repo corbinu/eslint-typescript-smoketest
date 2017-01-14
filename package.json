@@ -9,7 +9,7 @@
         "eslint-plugin-typescript": "^0.1.0",
         "fs-extra": "^1.0.0",
         "typescript": "^2.0.8",
-        "typescript-eslint-parser": "git+https://github.com/eslint/typescript-eslint-parser.git"
+        "typescript-eslint-parser": "git+https://github.com/soda0289/typescript-eslint-parser.git#fix-abstract-class-methods"
     },
     "scripts": {
         "copy": "node bin/copy.js",
