@@ -5,11 +5,11 @@
     "main": "index.js",
     "devDependencies": {
         "copy": "^0.3.0",
-        "eslint": "^3.5.0",
+        "eslint": "git+https://github.com/corbinu/eslint.git#eslint-scope",
         "eslint-plugin-typescript": "git+https://github.com/nzakas/eslint-plugin-typescript.git",
         "fs-extra": "^1.0.0",
-        "typescript": "^2.0.8",
-        "typescript-eslint-parser": "git+https://github.com/soda0289/typescript-eslint-parser.git#fix-multiple-call-signatures"
+        "typescript": "~2.0.8",
+        "typescript-eslint-parser": "git+https://github.com/eslint/typescript-eslint-parser.git"
     },
     "scripts": {
         "copy": "node bin/copy.js",
