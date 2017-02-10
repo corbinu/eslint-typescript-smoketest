@@ -31,7 +31,8 @@
 
 		"no-sparse-arrays": 0, //angular
 
-		"no-extra-boolean-cast": 0 //nativescript
+		"no-extra-boolean-cast": 0, //nativescript
+		"no-irregular-whitespace": 0 //nativescript
 	},
 	"extends": "eslint:recommended"
 }
