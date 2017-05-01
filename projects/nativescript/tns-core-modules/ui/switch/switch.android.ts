@@ -81,9 +81,6 @@ export class SwitchStyler implements style.Styler {
             SwitchStyler.setBackgroundAndBorderProperty,
             SwitchStyler.resetBackgroundAndBorderProperty), "Switch");
 
-        style.registerHandler(style.borderWidthProperty, style.ignorePropertyHandler, "Switch");
-        style.registerHandler(style.borderColorProperty, style.ignorePropertyHandler, "Switch");
-        style.registerHandler(style.borderRadiusProperty, style.ignorePropertyHandler, "Switch");
         style.registerHandler(style.backgroundInternalProperty, style.ignorePropertyHandler, "Switch");
     }
 }

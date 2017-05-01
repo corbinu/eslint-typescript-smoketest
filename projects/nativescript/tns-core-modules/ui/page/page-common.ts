@@ -1,15 +1,16 @@
-﻿import {ContentView} from "ui/content-view";
+﻿import { ContentView } from "ui/content-view";
 import view = require("ui/core/view");
 import dts = require("ui/page");
 import styleScope = require("../styling/style-scope");
-import {ActionBar} from "ui/action-bar";
-import {PropertyMetadataSettings, PropertyChangeData, Property, ValueSource} from "ui/core/dependency-observable";
+import { ActionBar } from "ui/action-bar";
+import { PropertyMetadataSettings, PropertyChangeData, Property, ValueSource } from "ui/core/dependency-observable";
 import * as style from "../styling/style";
 import * as fileSystemModule from "file-system";
 import * as frameModule from "ui/frame";
 import proxy = require("ui/core/proxy");
 import keyframeAnimation = require("ui/animation/keyframe-animation");
 import types = require("utils/types");
+import { Color } from "color";
 
 let fs: typeof fileSystemModule;
 function ensureFS() {
@@ -29,21 +30,47 @@ function ensureFrame() {
 const AffectsLayout = global.android ? PropertyMetadataSettings.None : PropertyMetadataSettings.AffectsLayout;
 
 const backgroundSpanUnderStatusBarProperty = new Property("backgroundSpanUnderStatusBar", "Page", new proxy.PropertyMetadata(false, AffectsLayout));
+const statusBarStyleProperty = new Property("statusBarStyle", "Page", new proxy.PropertyMetadata(undefined));
 
+function onStatusBarStylePropertyChanged(data: PropertyChangeData) {
+    const page = <Page>data.object;
+    if (page.isLoaded) {
+        page._updateStatusBar();
+    }
+}
+
+(<proxy.PropertyMetadata>statusBarStyleProperty.metadata).onSetNativeValue = onStatusBarStylePropertyChanged;
+
+const androidStatusBarBackgroundProperty = new Property("androidStatusBarBackground", "Page", new proxy.PropertyMetadata(undefined));
 const actionBarHiddenProperty = new Property("actionBarHidden", "Page", new proxy.PropertyMetadata(undefined, AffectsLayout));
 
 function onActionBarHiddenPropertyChanged(data: PropertyChangeData) {
     const page = <Page>data.object;
     if (page.isLoaded) {
-        page._updateActionBar(data.newValue);
+        // Update with disabled animation when setting visibility
+        page._updateActionBar(true);
     }
 }
 
 (<proxy.PropertyMetadata>actionBarHiddenProperty.metadata).onSetNativeValue = onActionBarHiddenPropertyChanged;
 
+const enableSwipeBackNavigationProperty = new Property("isoSwipeBackNavigationEnabled", "Page", new proxy.PropertyMetadata(true));
+
+function enableSwipeBackNavigationPropertyChanged(data: PropertyChangeData) {
+    const page = <Page>data.object;
+    if (page.isLoaded) {
+        page._updateEnableSwipeBackNavigation(data.newValue);
+    }
+}
+
+(<proxy.PropertyMetadata>enableSwipeBackNavigationProperty.metadata).onSetNativeValue = enableSwipeBackNavigationPropertyChanged;
+
 export class Page extends ContentView implements dts.Page {
     public static backgroundSpanUnderStatusBarProperty = backgroundSpanUnderStatusBarProperty;
+    public static statusBarStyleProperty = statusBarStyleProperty;
+    public static androidStatusBarBackgroundProperty = androidStatusBarBackgroundProperty;
     public static actionBarHiddenProperty = actionBarHiddenProperty;
+    public static iosSwipeBackNavigationEnabledProperty = enableSwipeBackNavigationProperty;
     public static navigatingToEvent = "navigatingTo";
     public static navigatedToEvent = "navigatedTo";
     public static navigatingFromEvent = "navigatingFrom";
@@ -75,8 +102,10 @@ export class Page extends ContentView implements dts.Page {
         this._applyCss();
 
         if (this.actionBarHidden !== undefined) {
-            this._updateActionBar(this.actionBarHidden);
+            this._updateActionBar();
         }
+
+        this._updateStatusBar();
 
         super.onLoaded();
     }
@@ -89,6 +118,21 @@ export class Page extends ContentView implements dts.Page {
         this._setValue(Page.backgroundSpanUnderStatusBarProperty, value);
     }
 
+    get statusBarStyle(): string {
+        return this.style._getValue(Page.statusBarStyleProperty);
+    }
+
+    set statusBarStyle(value: string) {
+        this.style._setValue(Page.statusBarStyleProperty, value);
+    }
+
+    get androidStatusBarBackground(): Color {
+        return this.style.androidStatusBarBackground;
+    }
+    set androidStatusBarBackground(value: Color) {
+        this.style.androidStatusBarBackground = value;
+    }
+
     get actionBarHidden(): boolean {
         return this._getValue(Page.actionBarHiddenProperty);
     }
@@ -97,7 +141,23 @@ export class Page extends ContentView implements dts.Page {
         this._setValue(Page.actionBarHiddenProperty, value);
     }
 
-    public _updateActionBar(hidden: boolean) {
+    get enableSwipeBackNavigation(): boolean {
+        return this._getValue(Page.iosSwipeBackNavigationEnabledProperty);
+    }
+
+    set enableSwipeBackNavigation(value: boolean) {
+        this._setValue(Page.iosSwipeBackNavigationEnabledProperty, value);
+    }
+
+    public _updateActionBar(disableNavBarAnimation?: boolean) {
+        //
+    }
+
+    public _updateStatusBar() {
+        //
+    }
+
+    public _updateEnableSwipeBackNavigation(hidden: boolean) {
         //
     }
 
@@ -197,9 +257,9 @@ export class Page extends ContentView implements dts.Page {
 
     public onNavigatingTo(context: any, isBackNavigation: boolean, bindingContext?: any) {
         this._navigationContext = context;
-        
+
         //https://github.com/NativeScript/NativeScript/issues/731
-        if (!isBackNavigation && !types.isNullOrUndefined(bindingContext)){
+        if (!isBackNavigation && !types.isNullOrUndefined(bindingContext)) {
             this.bindingContext = bindingContext;
         }
         this.notify(this.createNavigatedData(Page.navigatingToEvent, isBackNavigation));

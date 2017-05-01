@@ -59,13 +59,16 @@ export class PropertyMetadata implements definition.PropertyMetadata {
     public affectsStyle: boolean;
     public affectsLayout: boolean;
     public onValueChanged: definition.PropertyChangedCallback;
+    public onValidateValue: definition.PropertyValidationCallback;
+    public equalityComparer: definition.PropertyEqualityComparer;
 
     constructor(
         public defaultValue: any,
         public options: number = PropertyMetadataSettings.None,
         onChanged?: definition.PropertyChangedCallback,
-        public onValidateValue?: definition.PropertyValidationCallback,
-        public equalityComparer?: definition.PropertyEqualityComparer) {
+        onValidateValue?: definition.PropertyValidationCallback,
+        equalityComparer?: definition.PropertyEqualityComparer) {
+
         this.defaultValue = defaultValue;
         this.options = options;
         this.onValueChanged = onChanged;
@@ -91,7 +94,9 @@ export class Property implements definition.Property {
     public onValidateValue;
     public onValueChanged: definition.PropertyChangedCallback;
 
-    constructor(public name: string, public ownerType: string, public metadata: PropertyMetadata, public valueConverter?: (value: string) => any) {
+    public valueConverter: (value: string) => any
+
+    constructor(public name: string, public ownerType: string, public metadata: PropertyMetadata, valueConverter?: (value: string) => any) {
         // register key
         this.key = generatePropertyKey(name, ownerType, true);
         if (propertyFromKey[this.key]) {
@@ -126,6 +131,7 @@ export class Property implements definition.Property {
 
 export class PropertyEntry implements definition.PropertyEntry {
     public valueSource: number = ValueSource.Default;
+    public defaultValue: any;
     public inheritedValue: any;
     public cssValue: any;
     public localValue: any;
@@ -193,7 +199,7 @@ export class DependencyObservable extends Observable implements definition.Depen
             let defaultValue = defaultValueResult.result;
             if (defaultValueResult.cacheable) {
                 let entry = new PropertyEntry(property);
-                entry.effectiveValue = defaultValue;
+                entry.effectiveValue = entry.defaultValue = defaultValue;
                 this._propertyEntries[property.id] = entry;
             }
 
@@ -247,13 +253,15 @@ export class DependencyObservable extends Observable implements definition.Depen
         let currentValue = entry.effectiveValue;
         let newValue = this.getEffectiveValueAndUpdateEntry(currentValueSource, entry, property);
         if (!property.equalityComparer(currentValue, newValue)) {
-            // // If we fallback to defalutValue - remove propertyEntry.
-            // if (entry.valueSource === ValueSource.Default) {
-            //     delete this._propertyEntries[property.id];
-            // }
-            // else {
-            entry.effectiveValue = newValue;
-            // }
+            // If we fallback to defalutValue - remove propertyEntry.
+            // Don't delete properties with ValueGetters because they will get their default value again
+            // and it will be the current native value (if it was set before that, e.g. it will be wrong).
+            if (entry.valueSource === ValueSource.Default && !property.defaultValueGetter) {
+                delete this._propertyEntries[property.id];
+            }
+            else {
+                entry.effectiveValue = newValue;
+            }
 
             this._onPropertyChanged(property, currentValue, newValue);
         }
@@ -304,6 +312,9 @@ export class DependencyObservable extends Observable implements definition.Depen
         for (let i = 0, keys = Object.keys(this._propertyEntries); i < keys.length; i++) {
             let key = keys[i];
             let entry: PropertyEntry = this._propertyEntries[key];
+            if (entry.valueSource === ValueSource.Default) {
+                continue;
+            }
             if (!callback(entry.property, entry.effectiveValue)) {
                 break;
             }
@@ -389,7 +400,7 @@ export class DependencyObservable extends Observable implements definition.Depen
                     entry.valueSource = ValueSource.Inherited;
                 }
                 else {
-                    newValue = property.defaultValue;
+                    newValue = entry.defaultValue !== undefined ? entry.defaultValue : property.defaultValue;
                     entry.valueSource = ValueSource.Default;
                 }
                 break;
@@ -404,7 +415,7 @@ export class DependencyObservable extends Observable implements definition.Depen
                     entry.valueSource = ValueSource.Inherited;
                 }
                 else {
-                    newValue = property.defaultValue;
+                    newValue = entry.defaultValue !== undefined ? entry.defaultValue : property.defaultValue;
                     entry.valueSource = ValueSource.Default;
                 }
                 break;
@@ -423,7 +434,7 @@ export class DependencyObservable extends Observable implements definition.Depen
                     entry.valueSource = ValueSource.Inherited;
                 }
                 else {
-                    newValue = property.defaultValue;
+                    newValue = entry.defaultValue !== undefined ? entry.defaultValue : property.defaultValue;
                     entry.valueSource = ValueSource.Default;
                 }
                 break;

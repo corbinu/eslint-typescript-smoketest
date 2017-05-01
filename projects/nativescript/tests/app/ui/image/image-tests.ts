@@ -1,8 +1,8 @@
-﻿import {Image} from "ui/image";
-import {StackLayout} from "ui/layouts/stack-layout";
-import {GridLayout} from "ui/layouts/grid-layout";
-import {isIOS} from "platform";
-import {PropertyChangeData} from "data/observable";
+﻿import { Image } from "ui/image";
+import { StackLayout } from "ui/layouts/stack-layout";
+import { GridLayout } from "ui/layouts/grid-layout";
+import { isIOS, isAndroid } from "platform";
+import { PropertyChangeData } from "data/observable";
 import utils = require("utils/utils");
 
 // import {target} from "../../TKUnit";
@@ -23,6 +23,11 @@ import fs = require("file-system");
 import color = require("color");
 
 var imagePath = fs.path.join(__dirname, "../../logo.png");
+
+if (isAndroid) {
+    var imageModule = require("ui/image");
+    imageModule.currentMode = imageModule.CacheMode.memory; // use memory cache only.
+}
 
 export var test_Image_Members = function () {
     var image = new ImageModule.Image();
@@ -63,10 +68,10 @@ function runImageTest(done, image: ImageModule.Image, src: string) {
         testModel.off(ObservableModule.Observable.propertyChangeEvent, handler);
 
         try {
-            let imageIsLoaded = !!image.imageSource;
-            TKUnit.assertTrue(!image.isLoading, "Image.isLoading should be false.");
-            TKUnit.assertTrue(!testModel.get("imageIsLoading"), "imageIsLoading on viewModel should be false.");
-            TKUnit.assertTrue(imageIsLoaded, "imageIsLoading should be true.");
+            let imageIsLoaded = isIOS ? !!image.imageSource : true;
+            TKUnit.assertFalse(image.isLoading, "Image.isLoading should be false.");
+            TKUnit.assertFalse(testModel.get("imageIsLoading"), "imageIsLoading on viewModel should be false.");
+            TKUnit.assertTrue(imageIsLoaded, "imageSource should be set.");
             if (done) {
                 done(null);
             }
@@ -86,6 +91,8 @@ function runImageTest(done, image: ImageModule.Image, src: string) {
         twoWay: true
     }, testModel);
 
+    let page = helper.getCurrentPage();
+    page.content = image;
     image.src = src;
     testModel.on(ObservableModule.Observable.propertyChangeEvent, handler);
     if (done) {
@@ -102,6 +109,7 @@ export var test_SettingImageSrc = function (done) {
     var image = new ImageModule.Image();
     image.src = "https://www.google.com/images/errors/logo_sm_2.png";
     // << img-create-src
+    (<any>image).useCache = false;
     runImageTest(done, image, image.src)
 }
 
@@ -125,9 +133,20 @@ export var test_SettingImageSrcToDataURI = function () {
 
 export var test_SettingImageSrcToFileWithinAppAsync = function (done) {
     var image = new ImageModule.Image();
+    (<any>image).useCache = false;
     image.loadMode = "async";
     image.src = "~/logo.png";
     runImageTest(done, image, image.src)
+}
+
+export function test_imageSourceNotResetAfterCreateUI() {
+    let image = new ImageModule.Image();
+    let imageSource = ImageSourceModule.fromResource("splashscreen.9");
+    image.imageSource = imageSource;
+    helper.buildUIAndRunTest(image, (img, page) => {
+        TKUnit.waitUntilReady(() => image.isLoaded);
+        TKUnit.assertEqual(image.imageSource, imageSource); 
+    });
 }
 
 export var test_SettingImageSrcToDataURIAsync = function (done) {
@@ -140,7 +159,7 @@ export var test_SettingImageSrcToDataURIAsync = function (done) {
 // NOTE: This tests that setting multiple times src will not show the imageSource of a previous src value.
 // It however will never be reliable as to properly detect failure we need to use somewhat large timeout
 // waiting for imageSource to be set to the wrong value.
-export var __test_SettingImageSrcTwiceMustNotMismatch = function(done) {
+export var __test_SettingImageSrcTwiceMustNotMismatch = function (done) {
     var image = new Image();
     image.on("propertyChange", (args: PropertyChangeData) => {
         if (args.propertyName === "isLoading" && args.value === false) {
@@ -170,7 +189,7 @@ export var test_SettingStretch_AspectFit = function () {
     // << img-set-stretch
 
     var testFunc = function (views: Array<ViewModule.View>) {
-        var testImage = <ImageModule.Image> views[0];
+        var testImage = <ImageModule.Image>views[0];
 
         if (image.android) {
             var actualScaleType = testImage.android.getScaleType();
@@ -192,7 +211,7 @@ export var test_SettingStretch_Default = function () {
     image.imageSource = ImageSourceModule.fromFile(imagePath);
 
     var testFunc = function (views: Array<ViewModule.View>) {
-        var testImage = <ImageModule.Image> views[0];
+        var testImage = <ImageModule.Image>views[0];
 
         if (image.android) {
             var actualScaleType = testImage.android.getScaleType();
@@ -215,7 +234,7 @@ export var test_SettingStretch_AspectFill = function () {
     image.stretch = enumsModule.Stretch.aspectFill;
 
     var testFunc = function (views: Array<ViewModule.View>) {
-        var testImage = <ImageModule.Image> views[0];
+        var testImage = <ImageModule.Image>views[0];
 
         if (image.android) {
             var actualScaleType = testImage.android.getScaleType();
@@ -238,7 +257,7 @@ export var test_SettingStretch_Fill = function () {
     image.stretch = enumsModule.Stretch.fill;
 
     var testFunc = function (views: Array<ViewModule.View>) {
-        var testImage = <ImageModule.Image> views[0];
+        var testImage = <ImageModule.Image>views[0];
 
         if (image.android) {
             var actualScaleType = testImage.android.getScaleType();
@@ -261,7 +280,7 @@ export var test_SettingStretch_none = function () {
     image.stretch = enumsModule.Stretch.none;
 
     var testFunc = function (views: Array<ViewModule.View>) {
-        var testImage = <ImageModule.Image> views[0];
+        var testImage = <ImageModule.Image>views[0];
 
         if (image.android) {
             var actualScaleType = testImage.android.getScaleType();
@@ -284,21 +303,21 @@ function ios<T>(func: T): T {
 
 export var test_SettingImageSourceWhenSizedToParentDoesNotRequestLayout = ios(() => {
     let host = new GridLayout();
-    
+
     let image = new Image();
 
     host.width = 300;
     host.height = 300;
     host.addChild(image);
-    
+
     let mainPage = helper.getCurrentPage();
     mainPage.content = host;
     TKUnit.waitUntilReady(() => host.isLoaded);
-    
+
     let called = false;
     image.requestLayout = () => called = true;
     image.src = "~/logo.png";
-    
+
     TKUnit.assertFalse(called, "image.requestLayout should not be called.");
 });
 
@@ -308,15 +327,15 @@ export var test_SettingImageSourceWhenFixedWidthAndHeightDoesNotRequestLayout = 
     image.width = 100;
     image.height = 100;
     host.addChild(image);
-    
+
     let mainPage = helper.getCurrentPage();
     mainPage.content = host;
     TKUnit.waitUntilReady(() => host.isLoaded);
-    
+
     let called = false;
     image.requestLayout = () => called = true;
     image.src = "~/logo.png";
-    
+
     TKUnit.assertFalse(called, "image.requestLayout should not be called.");
 });
 
@@ -324,21 +343,22 @@ export var test_SettingImageSourceWhenSizedToContentShouldInvalidate = ios(() =>
     let host = new StackLayout();
     let image = new Image();
     host.addChild(image);
-    
+
     let mainPage = helper.getCurrentPage();
     mainPage.content = host;
     TKUnit.waitUntilReady(() => host.isLoaded);
-    
+
     let called = false;
     image.requestLayout = () => called = true;
     image.src = "~/logo.png";
-    
+
     TKUnit.assertTrue(called, "image.requestLayout should be called.");
 });
 
-export var test_DimensionsAreRoundedAfterScale = function() {
+export var test_DimensionsAreRoundedAfterScale = function () {
     let host = new StackLayout();
     let image = new Image();
+    (<any>image).useCache = false;
     image.src = "~/ui/image/700x50.png";
     let imageWidth = 700;
     let imageHeight = 50;
@@ -347,12 +367,11 @@ export var test_DimensionsAreRoundedAfterScale = function() {
     let hostWidth = 320;
     host.width = hostWidth / density;
     host.height = hostWidth / density;
-    host.addChild(image);    
+    host.addChild(image);
     let mainPage = helper.getCurrentPage();
     mainPage.content = host;
-    TKUnit.waitUntilReady(() => host.isLoaded);
-    TKUnit.waitUntilReady(() => image.isLayoutValid);
-    
+    TKUnit.waitUntilReady(() => host.isLayoutValid);
+
     let scale = hostWidth / imageWidth;
     let expectedHeight = Math.round(imageHeight * scale);
     TKUnit.assertEqual(image.getMeasuredWidth(), hostWidth, "Actual width is different from expected width.");
@@ -365,7 +384,7 @@ export var test_tintColor = function () {
     image.imageSource = ImageSourceModule.fromFile(imagePath);
 
     var testFunc = function (views: Array<ViewModule.View>) {
-        var testImage = <ImageModule.Image> views[0];
+        var testImage = <ImageModule.Image>views[0];
 
         if (image.android) {
             var tintColor = testImage.android.getColorFilter();
@@ -376,8 +395,7 @@ export var test_tintColor = function () {
             var imageColor = utils.ios.getColor(testImage.ios.tintColor);
             TKUnit.assert(!imageColor.equals(colorRed), "imageColor expected to be different than tintColor");
         }
-
-        image.color = colorRed;
+        image.tintColor = colorRed;
 
         if (image.android) {
             TKUnit.assert(testImage.android.getColorFilter() !== null, "tintColor expected to be set to a nonnull value");

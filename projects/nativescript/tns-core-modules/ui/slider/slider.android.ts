@@ -127,9 +127,6 @@ export class SliderStyler implements style.Styler {
             SliderStyler.setBackgroundAndBorderProperty,
             SliderStyler.resetBackgroundAndBorderProperty), "Slider");
 
-        style.registerHandler(style.borderWidthProperty, style.ignorePropertyHandler, "Slider");
-        style.registerHandler(style.borderColorProperty, style.ignorePropertyHandler, "Slider");
-        style.registerHandler(style.borderRadiusProperty, style.ignorePropertyHandler, "Slider");
         style.registerHandler(style.backgroundInternalProperty, style.ignorePropertyHandler, "Slider");
     }
 }

@@ -104,7 +104,7 @@ declare module "ui/frame" {
         navigationQueueIsEmpty(): boolean;
         navigationBarHeight: number;
         _processNavigationQueue(page: pages.Page);
-        _updateActionBar(page?: pages.Page);
+        _updateActionBar(page?: pages.Page, disableNavBarAnimation?: boolean);
         _getNavBarVisible(page: pages.Page): boolean;
         //@endprivate
 
@@ -208,7 +208,7 @@ declare module "ui/frame" {
          * - curl (same as curlUp) (iOS only)
          * - curlUp (iOS only)
          * - curlDown (iOS only)
-         * - explode (Android Lollipop an up only)
+         * - explode (Android Lollipop(21) and up only)
          * - fade
          * - flip (same as flipRight)
          * - flipRight

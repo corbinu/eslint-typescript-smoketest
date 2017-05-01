@@ -109,7 +109,7 @@ var _testOnClick = function (views: Array<viewModule.View>) {
     // << button-tap
 
     buttonTestsNative.performNativeClick(button);
-    TKUnit.assert(actualValue === true, "Actual: " + actualValue + "; Expected: " + true);
+    TKUnit.assertTrue(actualValue, "Actual: " + actualValue + "; Expected: " + true);
 }
 
 var _testBindTextDirectlyToModel = function (views: Array<viewModule.View>) {
@@ -255,6 +255,48 @@ export var testNativeTextAlignmentFromCss = function () {
 
         var actualResult = buttonTestsNative.getNativeTextAlignment(view);
         TKUnit.assert(actualResult === expectedTextAlignment, "Actual: " + actualResult + "; Expected: " + expectedTextAlignment);
+    });
+}
+
+export var test_StateHighlighted_also_fires_pressedState = function () {
+    helper.buildUIAndRunTest(_createButtonFunc(), function (views: Array<viewModule.View>) {
+        var view = <buttonModule.Button>views[0];
+        var page = <pagesModule.Page>views[1];
+        var expectedColor = "#ffff0000";
+        page.css = "button:pressed { background-color: " + expectedColor + "; }";
+
+        view._goToVisualState('highlighted');
+
+        var actualResult = buttonTestsNative.getNativeBackgroundColor(view);
+        TKUnit.assert(actualResult.hex === expectedColor, "Actual: " + actualResult.hex + "; Expected: " + expectedColor);
+    });
+}
+
+export var test_StateHighlighted_also_fires_activeState = function () {
+    helper.buildUIAndRunTest(_createButtonFunc(), function (views: Array<viewModule.View>) {
+        var view = <buttonModule.Button>views[0];
+        var page = <pagesModule.Page>views[1];
+        var expectedColor = "#ffff0000";
+        page.css = "button:active { background-color: " + expectedColor + "; }";
+
+        view._goToVisualState('highlighted');
+
+        var actualResult = buttonTestsNative.getNativeBackgroundColor(view);
+        TKUnit.assert(actualResult.hex === expectedColor, "Actual: " + actualResult.hex + "; Expected: " + expectedColor);
+    });
+}
+
+export var test_applying_disabled_visual_State_when_button_is_disable = function () {
+    helper.buildUIAndRunTest(_createButtonFunc(), function (views: Array<viewModule.View>) {
+        var view = <buttonModule.Button>views[0];
+        var page = <pagesModule.Page>views[1];
+        var expectedColor = "#ffff0000";
+        page.css = "button:disabled { background-color: " + expectedColor + "; }";
+
+        view.isEnabled = false;
+
+        var actualResult = buttonTestsNative.getNativeBackgroundColor(view);
+        TKUnit.assert(actualResult.hex === expectedColor, "Actual: " + actualResult.hex + "; Expected: " + expectedColor);
     });
 }
 

@@ -3,12 +3,26 @@ import types = require("utils/types");
 import fs = require("file-system");
 import common = require("./image-source-common");
 import enums = require("ui/enums");
+import * as imageAssetModule from "image-asset";
 
 global.moduleMerge(common, exports);
 
 export class ImageSource implements definition.ImageSource {
     public android: android.graphics.Bitmap;
     public ios: UIImage;
+
+    public fromAsset(asset: imageAssetModule.ImageAsset) {
+        return new Promise<definition.ImageSource>((resolve, reject) => {
+            asset.getImageAsync((image, err) => {
+                if (image) {
+                    resolve(common.fromNativeSource(image));
+                }
+                else {
+                    reject(err);
+                }
+            });
+        });
+    }
 
     public loadFromResource(name: string): boolean {
         this.ios = (<any>UIImage).tns_safeImageNamed(name) || (<any>UIImage).tns_safeImageNamed(`${name}.jpg`);
@@ -108,7 +122,9 @@ export class ImageSource implements definition.ImageSource {
     }
 
     public setNativeSource(source: any): boolean {
-        this.ios = source;
+        if (source instanceof UIImage) {
+            this.ios = source;
+        }
         return source != null;
     }
 
@@ -157,6 +173,10 @@ export class ImageSource implements definition.ImageSource {
 
         return NaN;
     }
+
+    get rotationAngle(): number {
+        return NaN;
+    }
 }
 
 function getImageData(instance: UIImage, format: string, quality = 1.0): NSData {
@@ -165,10 +185,9 @@ function getImageData(instance: UIImage, format: string, quality = 1.0): NSData 
         case enums.ImageFormat.png: // PNG
             data = UIImagePNGRepresentation(instance);
             break;
-        case enums.ImageFormat.jpeg: // JPEG
+        case enums.ImageFormat.jpeg || enums.ImageFormat.jpg: // JPEG
             data = UIImageJPEGRepresentation(instance, quality);
             break;
-
     }
     return data;
 }

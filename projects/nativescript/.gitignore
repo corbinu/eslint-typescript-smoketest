@@ -11,6 +11,7 @@ dist/
 package/
 
 *.js
+!tests/hooks/**/*.*
 !gruntfile.js
 !js-libs/**/*.*
 !css/**/*.*
@@ -26,6 +27,7 @@ CrossPlatformModules.csproj.user
 bin/
 obj/
 .vs/
+.idea/
 
 .baseDir.ts
 .ctags-exclude

@@ -1,4 +1,5 @@
 import { Component, ChangeDetectionStrategy, EventEmitter, Input, Output } from "@angular/core";
+import * as utils from "utils/utils";
 
 import { Grocery, GroceryService } from "../shared";
 import { alert } from "../../shared";
@@ -7,8 +8,9 @@ declare var UIColor: any;
 
 @Component({
   selector: "gr-grocery-list",
-  templateUrl: "groceries/grocery-list/grocery-list.component.html",
-  styleUrls: ["groceries/grocery-list/grocery-list.component.css"],
+  moduleId: module.id,
+  templateUrl: "./grocery-list.component.html",
+  styleUrls: ["./grocery-list.component.css"],
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class GroceryListComponent {
@@ -24,13 +26,15 @@ export class GroceryListComponent {
   load() {
     this.loading.next("");
     this.store.load()
-      .then(() => {
-        this.loaded.next("");
-        this.listLoaded = true;
-      })
-      .catch(() => {
-        alert("An error occurred loading your grocery list.");
-      });
+      .subscribe(
+        () => {
+          this.loaded.next("");
+          this.listLoaded = true;
+        },
+        () => {
+          alert("An error occurred loading your grocery list.");
+        }
+      );
   }
 
   // The following trick makes the background color of each cell
@@ -38,7 +42,8 @@ export class GroceryListComponent {
   makeBackgroundTransparent(args) {
     let cell = args.ios;
     if (cell) {
-      cell.backgroundColor = UIColor.clearColor();
+      // support XCode 8
+      cell.backgroundColor = utils.ios.getter(UIColor, UIColor.clearColor);
     }
   }
 
@@ -50,16 +55,35 @@ export class GroceryListComponent {
   }
 
   toggleDone(grocery: Grocery) {
-    this.store.toggleDoneFlag(grocery, this.showDeleted)
-      .catch(() => {
-        alert("An error occurred managing your grocery list.");
-      });
+    if (grocery.deleted) {
+      grocery.done = !grocery.done;
+      return;
+    }
+
+    this.store.toggleDoneFlag(grocery)
+      .subscribe(
+        () => { },
+        () => {
+          alert("An error occurred managing your grocery list.");
+        }
+      );
   }
 
   delete(grocery: Grocery) {
-    this.store.setDeleteFlag(grocery)
-      .catch(() => {
-        alert("An error occurred while deleting an item from your list.");
-      });
+    this.loading.next("");
+    let successHandler = () => this.loaded.next("");
+    let errorHandler = () => {
+      alert("An error occurred while deleting an item from your list.");
+      this.loaded.next("");
+    };
+
+    if (grocery.deleted) {
+      this.store.permanentlyDelete(grocery)
+        .subscribe(successHandler, errorHandler);
+    } else {
+      this.store.setDeleteFlag(grocery)
+        .subscribe(successHandler, errorHandler);
+    }
   }
 }
+

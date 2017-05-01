@@ -126,7 +126,7 @@ export function test_loadWithOptionsFromTNS() {
 
 export function test_loadWithOptionsFromTNSPath() {
     var v = builder.load({
-        path: "tns_modules/ui/label",
+        path: "ui/label",
         name: "Label"
     });
 
@@ -139,7 +139,7 @@ export function test_loadWithAttributes() {
     var lColor = "#FF0000"; // red
 
     var v = builder.load({
-        path: "tns_modules/ui/label",
+        path: "ui/label",
         name: "Label",
         attributes: {
             text: lText,
@@ -166,6 +166,13 @@ export function test_parse_ShouldResolveExportsFromCodeFile() {
     page._emit("loaded");
 
     TKUnit.assert((<any>page).customCodeLoaded, "Parse should resolve exports from custom code file.");
+}
+
+export function test_parse_ShouldResolveExportsFromImport() {
+    var page = builder.parse("<Page import='~/xml-declaration/custom-code-file' loaded='loaded'></Page>");
+    page._emit("loaded");
+
+    TKUnit.assert((<any>page).customCodeLoaded, "Parse should resolve exports from import.");
 }
 
 export function test_parse_ShouldResolveExportsFromCodeFileForPageContent() {
@@ -510,7 +517,7 @@ export function test_parse_ShouldParseCustomComponentWithoutXml() {
 };
 
 export function test_parse_ShouldParseCustomComponentWithoutXmlFromTNSModules() {
-    var p = <Page>builder.parse('<Page xmlns' + ':customControls="tns_modules/ui/label"><customControls:Label /></Page>');
+    var p = <Page>builder.parse('<Page xmlns' + ':customControls="ui/label"><customControls:Label /></Page>');
     var ctrl = p.content;
 
     TKUnit.assert(ctrl instanceof Label, "Expected result: custom control is defined!; Actual result: " + ctrl);
@@ -775,7 +782,7 @@ export function test_NonExistingElementError() {
     var basePath = "xml-declaration/";
     var expectedErrorStart =
         "Building UI from XML. @file:///app/" + basePath + "errors/non-existing-element.xml:11:5\n" +
-        " ↳Module 'ui/unicorn' not found for element 'Unicorn'.";
+        " > Module 'ui/unicorn' not found for element 'Unicorn'.";
     var message;
     try {
         builder.load(__dirname + "/errors/non-existing-element.xml");
@@ -789,7 +796,7 @@ export function test_NonExistingElementInTemplateError() {
     var basePath = "xml-declaration/";
     var expectedErrorStart =
         "Building UI from XML. @file:///app/" + basePath + "errors/non-existing-element-in-template.xml:14:17\n" +
-        " ↳Module 'ui/unicorn' not found for element 'Unicorn'.";
+        " > Module 'ui/unicorn' not found for element 'Unicorn'.";
     var message;
     var page = builder.load(__dirname + "/errors/non-existing-element-in-template.xml");
     TKUnit.assert(view, "Expected the xml to generate a page");

@@ -3,6 +3,12 @@ import definition = require("platform");
 import utils = require("utils/utils");
 import * as enumsModule from "ui/enums";
 
+declare module "platform" {
+    export interface ScreenMetrics {
+        _invalidate(): void;
+    }
+}
+
 const MIN_TABLET_PIXELS = 600;
 
 export module platformNames {
@@ -103,9 +109,15 @@ class Device implements definition.Device {
 
 class MainScreen implements definition.ScreenMetrics {
     private _metrics: android.util.DisplayMetrics;
+
+    public _invalidate(): void {
+        this._metrics = null;
+    }
+    
     private get metrics(): android.util.DisplayMetrics {
         if (!this._metrics) {
-            this._metrics = utils.ad.getApplicationContext().getResources().getDisplayMetrics();
+            this._metrics = new android.util.DisplayMetrics();
+            utils.ad.getApplicationContext().getSystemService(android.content.Context.WINDOW_SERVICE).getDefaultDisplay().getRealMetrics(this._metrics);
         }
         return this._metrics;
     }

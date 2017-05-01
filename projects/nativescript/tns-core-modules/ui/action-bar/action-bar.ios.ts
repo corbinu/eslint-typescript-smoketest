@@ -30,7 +30,7 @@ export class NavigationButton extends ActionItem {
 
 export class ActionBar extends common.ActionBar {
 
-     get ios(): UIView {
+    get ios(): UIView {
 
         if (!(this.page && this.page.parent)) {
             return;
@@ -41,9 +41,9 @@ export class ActionBar extends common.ActionBar {
             return viewController.navigationController.navigationBar;
         }
         return null;
-     }
+    }
 
-     public update() {
+    public update() {
         // Page should be attached to frame to update the action bar.
         if (!(this.page && this.page.parent)) {
             return;
@@ -51,7 +51,7 @@ export class ActionBar extends common.ActionBar {
 
         var viewController = (<UIViewController>this.page.ios);
         var navigationItem: UINavigationItem = viewController.navigationItem;
-        var navController = frameModule.topmost().ios.controller; 
+        var navController = frameModule.topmost().ios.controller;
         var navigationBar = navController ? <UINavigationBar>navController.navigationBar : null;
         var previousController: UIViewController;
 
@@ -159,6 +159,12 @@ export class ActionBar extends common.ActionBar {
             barButtonItem = UIBarButtonItem.alloc().initWithTitleStyleTargetAction(item.text + "", UIBarButtonItemStyle.Plain, tapHandler, "tap");
         }
 
+        if (item.text) {
+            barButtonItem.isAccessibilityElement = true;
+            barButtonItem.accessibilityLabel = item.text;
+            barButtonItem.accessibilityTraits = UIAccessibilityTraitButton;
+        }
+
         return barButtonItem;
     }
 
@@ -223,7 +229,7 @@ export class ActionBar extends common.ActionBar {
 
         this.actionItems.getItems().forEach((actionItem) => {
             if (actionItem.actionView) {
-                view.View.measureChild(this, actionItem.actionView, 
+                view.View.measureChild(this, actionItem.actionView,
                     utils.layout.makeMeasureSpec(width, utils.layout.AT_MOST),
                     utils.layout.makeMeasureSpec(navBarHeight, utils.layout.AT_MOST));
             }

@@ -1,0 +1,12 @@
+{
+	"rules": {
+		"no-empty": "off",
+		"no-extra-semi": "off", //babylon, vscode, glimmer, nativescript, angular
+		"no-cond-assign": "off", //babylon, vscode, glimmer, nativescript, angular
+		"no-debugger": "off", //babylon, angular
+		"no-console": "off", //babylon, nativescript-sample-groceries, angular
+		"no-case-declarations": "off", //glimmer, nativescript, angular
+		"no-sparse-arrays": "off" //angular
+	},
+	"extends": ["../../.main.json"]
+}

@@ -2,10 +2,12 @@
 import view = require("ui/core/view");
 import proxy = require("ui/core/proxy");
 import imageSource = require("image-source");
+import imageAssetModule = require("image-asset");
 import definition = require("ui/image");
 import enums = require("ui/enums");
 import platform = require("platform");
 import utils = require("utils/utils");
+import color = require("color");
 
 import * as types from "utils/types";
 
@@ -79,6 +81,14 @@ export class Image extends view.View implements definition.Image {
         this._setValue(Image.loadModeProperty, value);
     }
 
+    get tintColor(): color.Color {
+        return this.style.tintColor;
+    }
+
+    set tintColor(value: color.Color) {
+        this.style.tintColor = value;
+    } 
+
     public _setNativeImage(nativeImage: any) {
         //
     }
@@ -86,7 +96,7 @@ export class Image extends view.View implements definition.Image {
     /**
      * @internal
      */
-    _createImageSourceFromSrc(): void {
+    public _createImageSourceFromSrc(): void {
         var value = this.src;
         if (types.isString(value)) {
             value = value.trim();
@@ -148,6 +158,12 @@ export class Image extends view.View implements definition.Image {
             // Support binding the imageSource trough the src property
             this.imageSource = value;
             this._setValue(Image.isLoadingProperty, false);
+        }
+        else if (value instanceof imageAssetModule.ImageAsset) {
+            imageSource.fromAsset(value).then((result) => {
+                this.imageSource = result;
+                this._setValue(Image.isLoadingProperty, false);
+            });
         }
         else {
             this.imageSource = imageSource.fromNativeSource(value);

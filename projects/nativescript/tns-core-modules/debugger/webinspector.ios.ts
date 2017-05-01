@@ -3,7 +3,20 @@ var inspectorCommands: typeof inspectorCommandTypes = require("./InspectorBacken
 
 import * as debuggerDomains from "./debugger";
 
-import * as utils from "utils/utils";
+declare var __inspectorSendEvent;
+/**
+ * Checks if the property is a function and if it is, calls it on this.
+ * Designed to support backward compatibility for methods that became properties.
+ * Will not work on delegates since it checks if the propertyValue is a function, and delegates are marshalled as functions.
+ * Example: getter(NSRunLoop, NSRunLoop.currentRunLoop).runUntilDate(NSDate.dateWithTimeIntervalSinceNow(waitTime));
+ */
+function getter<T>(_this: any, property: T | {(): T}): T {
+    if (typeof property === "function") {
+        return (<{(): T}>property).call(_this);
+    } else {
+        return <T>property;
+    }
+}
 
 declare var __inspectorTimestamp;
 
@@ -130,10 +143,10 @@ export class NetworkDomainDebugger implements inspectorCommandTypes.NetworkDomai
      * Enables network tracking, network events will now be delivered to the client.
      */
     enable(): void {
-        if (debuggerDomains.network) {
+        if (debuggerDomains.getNetwork()) {
             throw new Error("One NetworkDomainDebugger may be enabled at a time.");
         } else {
-            debuggerDomains.network = this;
+            debuggerDomains.setNetwork(this);
         }
         this._enabled = true;
     }
@@ -142,8 +155,8 @@ export class NetworkDomainDebugger implements inspectorCommandTypes.NetworkDomai
      * Disables network tracking, prevents network events from being sent to the client.
      */
     disable(): void {
-        if (debuggerDomains.network === this) {
-            debuggerDomains.network = null;
+        if (debuggerDomains.getNetwork() === this) {
+            debuggerDomains.setNetwork(null);
         }
         this._enabled = false;
     }
@@ -214,9 +227,9 @@ export class NetworkDomainDebugger implements inspectorCommandTypes.NetworkDomai
      * Loads a resource in the context of a frame on the inspected page without cross origin checks.
      */
     loadResource(params: inspectorCommandTypes.NetworkDomain.LoadResourceMethodArguments): { content: string, mimeType: string, status: number } {
-        let appPath = utils.ios.getter(NSBundle, NSBundle.mainBundle).bundlePath;
+        let appPath = getter(NSBundle, NSBundle.mainBundle).bundlePath;
         let pathUrl = params.url.replace("file://", appPath);
-        let fileManager = utils.ios.getter(NSFileManager, NSFileManager.defaultManager);
+        let fileManager = getter(NSFileManager, NSFileManager.defaultManager);
         let data = fileManager.fileExistsAtPath(pathUrl) ? fileManager.contentsAtPath(pathUrl) : undefined;
         let content = data ? NSString.alloc().initWithDataEncoding(data, NSUTF8StringEncoding) : "";
 
@@ -233,5 +246,16 @@ export class NetworkDomainDebugger implements inspectorCommandTypes.NetworkDomai
         let resourceData = new Request(this, id);
         resources_datas[id] = resourceData;
         return resourceData;
+    }
+}
+
+@inspectorCommands.DomainDispatcher("Runtime")
+export class RuntimeDomainDebugger {
+    constructor() {
+        __inspectorSendEvent(`{"method":"Runtime.executionContextCreated","params":{"context":{"id":1,"origin":"http://main.xml","name":"","auxData":{"isDefault":true,"frameId":"${frameId}"}}}}`);
+    }
+
+    compileScript(): { scriptId?: string, exceptionDetails?: Object } {
+        return {};
     }
 }

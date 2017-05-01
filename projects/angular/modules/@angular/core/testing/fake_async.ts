@@ -48,6 +48,7 @@ let _inFakeAsyncCall = false;
  * @experimental
  */
 export function fakeAsync(fn: Function): (...args: any[]) => any {
+  // Not using an arrow function to preserve context passed from call site
   return function(...args: any[]) {
     const proxyZoneSpec = ProxyZoneSpec.assertPresent();
     if (_inFakeAsyncCall) {
@@ -67,7 +68,7 @@ export function fakeAsync(fn: Function): (...args: any[]) => any {
       const lastProxyZoneSpec = proxyZoneSpec.getDelegate();
       proxyZoneSpec.setDelegate(_fakeAsyncTestZoneSpec);
       try {
-        res = fn(...args);
+        res = fn.apply(this, args);
         flushMicrotasks();
       } finally {
         proxyZoneSpec.setDelegate(lastProxyZoneSpec);
@@ -120,8 +121,8 @@ export function tick(millis: number = 0): void {
  * @experimental
  */
 export function discardPeriodicTasks(): void {
-  let zoneSpec = _getFakeAsyncZoneSpec();
-  let pendingTimers = zoneSpec.pendingPeriodicTimers;
+  const zoneSpec = _getFakeAsyncZoneSpec();
+  const pendingTimers = zoneSpec.pendingPeriodicTimers;
   zoneSpec.pendingPeriodicTimers.length = 0;
 }
 

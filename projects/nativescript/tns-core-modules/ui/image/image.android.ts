@@ -1,28 +1,34 @@
 ﻿import imageCommon = require("./image-common");
 import dependencyObservable = require("ui/core/dependency-observable");
 import proxy = require("ui/core/proxy");
-import * as enumsModule from "ui/enums";
 import style = require("ui/styling/style");
 import view = require("ui/core/view");
-import background = require("ui/styling/background");
+import enums = require("ui/enums");
+import types = require("utils/types");
+import imageSource = require("image-source");
 import utils = require("utils/utils");
+import * as fs from "file-system";
 
 global.moduleMerge(imageCommon, exports);
 
-var enums: typeof enumsModule;
-function ensureEnums() {
-    if (!enums) {
-        enums = require("ui/enums");
-    }
+const FILE_PREFIX = "file:///";
+let ASYNC = "async";
+let imageFetcher: org.nativescript.widgets.image.Fetcher;
+let imageCache: org.nativescript.widgets.image.Cache;
+
+export enum CacheMode {
+    none,
+    memory,
+    diskAndMemory
 }
 
+export let currentCacheMode: CacheMode;
+
 function onStretchPropertyChanged(data: dependencyObservable.PropertyChangeData) {
-    var image = <Image>data.object;
+    let image = <Image>data.object;
     if (!image.android) {
         return;
     }
-
-    ensureEnums();
 
     switch (data.newValue) {
         case enums.Stretch.aspectFit:
@@ -47,7 +53,34 @@ function onImageSourcePropertyChanged(data: dependencyObservable.PropertyChangeD
         return;
     }
 
-    image._setNativeImage(data.newValue ? data.newValue.android : null);
+    image._setNativeImage(data.newValue);
+}
+
+export function initImageCache(context: android.content.Context, mode = CacheMode.diskAndMemory, memoryCacheSize: number = 0.25, diskCacheSize: number = 10 * 1024 * 1024): void {
+    if (currentCacheMode === mode) {
+        return;
+    }
+
+    currentCacheMode = mode;
+    if (!imageFetcher) {
+        imageFetcher = org.nativescript.widgets.image.Fetcher.getInstance(context);
+    }
+
+    // Disable cache.
+    if (mode === CacheMode.none) {
+        if (imageCache != null && imageFetcher != null) {
+            imageFetcher.clearCache();
+        }
+    }
+
+    let params = new org.nativescript.widgets.image.Cache.CacheParams();
+    params.memoryCacheEnabled = mode !== CacheMode.none; 
+    params.setMemCacheSizePercent(memoryCacheSize); // Set memory cache to % of app memory
+    params.diskCacheEnabled = mode === CacheMode.diskAndMemory;
+    params.diskCacheSize = diskCacheSize;
+    imageCache = org.nativescript.widgets.image.Cache.getInstance(params);
+    imageFetcher.addImageCache(imageCache);
+    imageFetcher.initCache();
 }
 
 // register the setNativeValue callback
@@ -57,83 +90,99 @@ function onImageSourcePropertyChanged(data: dependencyObservable.PropertyChangeD
 export class Image extends imageCommon.Image {
     private _android: org.nativescript.widgets.ImageView;
 
+    public decodeWidth = 0;
+    public decodeHeight = 0;
+    public useCache = true;
+
     get android(): org.nativescript.widgets.ImageView {
         return this._android;
     }
 
     public _createUI() {
+        if (!imageFetcher) {
+            initImageCache(this._context);
+        }
+
         this._android = new org.nativescript.widgets.ImageView(this._context);
+        this._createImageSourceFromSrc();
     }
 
     public _setNativeImage(nativeImage: any) {
-        this.android.setImageBitmap(nativeImage);
+        if (!nativeImage) {
+            return;
+        }
+        
+        let rotation = nativeImage.rotationAngle ? nativeImage.rotationAngle : 0;
+        this.android.setRotationAngle(rotation);
+        this.android.setImageBitmap(nativeImage.android);
+    }
+
+    public _createImageSourceFromSrc() {
+        let imageView = this._android;
+        if (!imageView || !this.src) {
+            return;
+        }
+
+        let value = this.src;
+        let async = this.loadMode === ASYNC;
+        let owner = new WeakRef<Image>(this);
+        let listener = new org.nativescript.widgets.image.Worker.OnImageLoadedListener({
+            onImageLoaded: function (success) {
+                let that = owner.get();
+                if (that) {
+                    that._setValue(Image.isLoadingProperty, false);
+                }
+            }
+        });
+
+        this._resetValue(Image.imageSourceProperty);
+        if (types.isString(value)) {
+            value = value.trim();
+            this._setValue(Image.isLoadingProperty, true);
+
+            if (utils.isDataURI(value)) {
+                // TODO: Check with runtime what should we do in case of base64 string.
+                super._createImageSourceFromSrc();
+            }
+            else if (imageSource.isFileOrResourcePath(value)) {
+                if (value.indexOf(utils.RESOURCE_PREFIX) === 0) {
+                    imageView.setUri(value, this.decodeWidth, this.decodeHeight, this.useCache, async, listener);
+                }
+                else {
+                    let fileName = value;
+                    if (fileName.indexOf("~/") === 0) {
+                        fileName = fs.path.join(fs.knownFolders.currentApp().path, fileName.replace("~/", ""));
+                    }
+
+                    imageView.setUri(FILE_PREFIX + fileName, this.decodeWidth, this.decodeHeight, this.useCache, async, listener);
+                }
+            }
+            else {
+                // For backwards compatibility http always use async loading.
+                imageView.setUri(value, this.decodeWidth, this.decodeHeight, this.useCache, true, listener);
+            }
+        } else {
+            super._createImageSourceFromSrc();
+        }
     }
 }
 
 export class ImageStyler implements style.Styler {
-    // Corner radius
-    private static setBorderRadiusProperty(v: view.View, newValue: any, defaultValue?: any) {
-        if (!v._nativeView) {
-            return;
-        }
-        var val = Math.round(newValue * utils.layout.getDisplayDensity());
-        (<org.nativescript.widgets.ImageView>v._nativeView).setCornerRadius(val);
-        background.ad.onBackgroundOrBorderPropertyChanged(v);
-    }
-
-    private static resetBorderRadiusProperty(v: view.View, nativeValue: any) {
-        if (!v._nativeView) {
-            return;
-        }
-        (<org.nativescript.widgets.ImageView>v._nativeView).setCornerRadius(0);
-        background.ad.onBackgroundOrBorderPropertyChanged(v);
-    }
-
-    // Border width
-    private static setBorderWidthProperty(v: view.View, newValue: any, defaultValue?: any) {
-        if (!v._nativeView) {
-            return;
-        }
-
-        var val = Math.round(newValue * utils.layout.getDisplayDensity());
-        (<org.nativescript.widgets.ImageView>v._nativeView).setBorderWidth(val);
-        background.ad.onBackgroundOrBorderPropertyChanged(v);
-    }
-
-    private static resetBorderWidthProperty(v: view.View, nativeValue: any) {
-        if (!v._nativeView) {
-            return;
-        }
-        (<org.nativescript.widgets.ImageView>v._nativeView).setBorderWidth(0);
-        background.ad.onBackgroundOrBorderPropertyChanged(v);
-    }
-
     // tint color
-    private static setColorProperty(view: view.View, newValue: any) {
+    private static setTintColorProperty(view: view.View, newValue: any) {
         var imageView = <org.nativescript.widgets.ImageView>view._nativeView;
         imageView.setColorFilter(newValue);
     }
 
-    private static resetColorProperty(view: view.View, nativeValue: number) {
+    private static resetTintColorProperty(view: view.View, nativeValue: number) {
         var imageView = <org.nativescript.widgets.ImageView>view._nativeView;
         imageView.clearColorFilter();
     }
 
     public static registerHandlers() {
-        // Use the same handler for all background/border properties
-        // Note: There is no default value getter - the default value is handled in background.ad.onBackgroundOrBorderPropertyChanged
-
-        style.registerHandler(style.borderRadiusProperty, new style.StylePropertyChangedHandler(
-            ImageStyler.setBorderRadiusProperty,
-            ImageStyler.resetBorderRadiusProperty), "Image");
-
-        style.registerHandler(style.borderWidthProperty, new style.StylePropertyChangedHandler(
-            ImageStyler.setBorderWidthProperty,
-            ImageStyler.resetBorderWidthProperty), "Image");
-
-        style.registerHandler(style.colorProperty, new style.StylePropertyChangedHandler(
-            ImageStyler.setColorProperty,
-            ImageStyler.resetColorProperty), "Image");
+        style.registerHandler(style.tintColorProperty, new style.StylePropertyChangedHandler(
+            ImageStyler.setTintColorProperty,
+            ImageStyler.resetTintColorProperty), "Image");
     }
 }
 

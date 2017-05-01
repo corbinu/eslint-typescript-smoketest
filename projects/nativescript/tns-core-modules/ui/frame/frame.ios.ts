@@ -1,10 +1,10 @@
 ﻿import frameCommon = require("./frame-common");
 import definition = require("ui/frame");
 import trace = require("trace");
-import {Page} from "ui/page";
-import {NavigationBarVisibility, AnimationCurve} from "ui/enums";
+import { Page } from "ui/page";
+import { NavigationBarVisibility, AnimationCurve } from "ui/enums";
 import utils = require("utils/utils");
-import {View} from "ui/core/view";
+import { View } from "ui/core/view";
 import uiUtils = require("ui/utils");
 import * as types from "utils/types";
 import application = require("application");
@@ -109,10 +109,10 @@ export class Frame extends frameCommon.Frame {
         backstackEntry[NAV_DEPTH] = navDepth;
         viewController[ENTRY] = backstackEntry;
 
-        this._updateActionBar(backstackEntry.resolvedPage);
-
         // First navigation.
         if (!this._currentEntry) {
+            // Update action-bar with disabled animations before the initial navigation.
+            this._updateActionBar(backstackEntry.resolvedPage, true);
             this._ios.controller.pushViewControllerAnimated(viewController, animated);
             if (trace.enabled) {
                 trace.write(`${this}.pushViewControllerAnimated(${viewController}, ${animated}); depth = ${navDepth}`, trace.categories.Navigation);
@@ -189,13 +189,24 @@ export class Frame extends frameCommon.Frame {
         }
     }
 
-    public _updateActionBar(page?: Page): void {
+    public _updateActionBar(page?: Page, disableNavBarAnimation: boolean = false): void {
         super._updateActionBar(page);
 
         page = page || this.currentPage;
         let newValue = this._getNavBarVisible(page);
 
+        let disableNavBarAnimationCache = this._ios._disableNavBarAnimation;
+
+        if (disableNavBarAnimation) {
+            this._ios._disableNavBarAnimation = true;
+        }
+
         this._ios.showNavigationBar = newValue;
+
+        if (disableNavBarAnimation) {
+            this._ios._disableNavBarAnimation = disableNavBarAnimationCache;
+        }
+
         if (this._ios.controller.navigationBar) {
             this._ios.controller.navigationBar.userInteractionEnabled = this.navigationQueueIsEmpty();
         }
@@ -256,6 +267,7 @@ export class Frame extends frameCommon.Frame {
     }
 
     public onMeasure(widthMeasureSpec: number, heightMeasureSpec: number): void {
+        View.adjustChildLayoutParams(this.currentPage, widthMeasureSpec, heightMeasureSpec);
 
         let width = utils.layout.getMeasureSpecSize(widthMeasureSpec);
         let widthMode = utils.layout.getMeasureSpecMode(widthMeasureSpec);
@@ -300,6 +312,8 @@ export class Frame extends frameCommon.Frame {
         if (this._navigateToEntry && this.currentPage) {
             this.layoutPage(this._navigateToEntry.resolvedPage);
         }
+
+        View.restoreChildOriginalParams(this.currentPage);
     }
 
     public layoutPage(page: Page): void {
@@ -311,6 +325,12 @@ export class Frame extends frameCommon.Frame {
         // If background does not span under statusbar - reduce available height and adjust top offset.
         let statusBarHeight = (page && !page.backgroundSpanUnderStatusBar && !this.parent) ? uiUtils.ios.getStatusBarHeight() : 0;
 
+        // Status bar height should be ignored when UINavigationBar is visible and not translucent
+        if (this._ios.showNavigationBar &&
+            !this._ios.controller.navigationBar.translucent &&
+            page && (<any>page)._ios && !(<any>page)._ios.shown) {
+            statusBarHeight = 0;
+        }
         View.layoutChild(this, page, 0, statusBarHeight, this._right, this._bottom);
     }
 
@@ -680,7 +700,6 @@ class iOSFrame implements definition.iOSFrame {
         this._frame = frame;
         this._controller = UINavigationControllerImpl.initWithOwner(new WeakRef(frame));
         this._controller.automaticallyAdjustsScrollViewInsets = false;
-        //this.showNavigationBar = false;
         this._navBarVisibility = NavigationBarVisibility.auto;
     }
 

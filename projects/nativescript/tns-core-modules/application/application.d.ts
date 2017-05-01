@@ -117,10 +117,20 @@ declare module "application" {
     export var resources: any;
 
     /**
+     * Sets application level static resources.
+     */
+    export function setResources(resources: any);
+
+    /**
      * The application level css file name (starting from the application root). Used to set css across all pages.
      * Css will be applied for every page and page css will be applied after.
      */
     export var cssFile: string;
+
+    /**
+     * Sets css file name for the application. 
+     */
+    export function setCssFileName(cssFile: string);
 
     //@private
     export var appSelectors: RuleSet[];
@@ -300,12 +310,12 @@ declare module "application" {
         /**
          * The Permissions
          */
-        permissions: Array<String>,
+        permissions: Array<string>,
 
         /**
          * The Granted.
          */
-        grantResults: Array<Number>
+        grantResults: Array<number>
     }
 
     /**
@@ -358,12 +368,12 @@ declare module "application" {
         foregroundActivity: any /* android.app.Activity */;
 
         /**
-         * The currently active (loaded) Context. This is typically the top-level Activity that is just created.
+         * [Deprecated. Please use the respective event instead.] Please use foregroundActivity property.
          */
         currentContext: any /* android.content.Context */;
 
         /**
-         * The main (start) Activity for the application.
+         * [Deprecated. Please use foregroundActivity or activity related events instead.] The main (start) Activity for the application.
          */
         startActivity: any /* android.app.Activity */;
 
@@ -373,7 +383,7 @@ declare module "application" {
         packageName: string;
 
         /**
-         * True if the application is not running (suspended), false otherwise.
+         * True if the main application activity is not running (suspended), false otherwise.
          */
         paused: boolean;
         
@@ -480,7 +490,7 @@ declare module "application" {
         /**
          * This event is raised on the back button is pressed in an android application.
          */
-        on(event: "activityRequestPermissions", callback: (args: AndroidActivityBackPressedEventData) => void, thisArg?: any);
+        on(event: "activityRequestPermissions", callback: (args: AndroidActivityRequestPermissionsEventData) => void, thisArg?: any);
 
         /**
          * String value used when hooking to activityCreated event.
@@ -558,6 +568,12 @@ declare module "application" {
          * The root view controller for the application.
          */
         rootController: any /* UIViewController */;
+
+        /* tslint:enable */
+        /**
+         * The key window.
+         */
+        window: any /* UIWindow */;        
 
         /**
          * The [UIApplication](https://developer.apple.com/library/ios/documentation/UIKit/Reference/UIApplication_Class/index.html).

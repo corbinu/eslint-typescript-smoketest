@@ -1,0 +1,6 @@
+{
+	"rules": {
+		"no-console": "off" //babylon, nativescript-sample-groceries, angular
+	},
+	"extends": ["../../.main.json"]
+}

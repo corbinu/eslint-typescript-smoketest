@@ -81,6 +81,14 @@ export function test_setting_borderColor_property_from_CSS_is_applied_to_Style()
     test_property_from_CSS_is_applied_to_style("borderColor", "border-color", new color.Color("#FF0000"), "#FF0000");
 }
 
+export function test_setting_borderColorRGB_property_from_CSS_is_applied_to_Style() {
+    test_property_from_CSS_is_applied_to_style("borderColor", "border-color", new color.Color("#FF0000"), "rgb(255, 0, 0)");
+}
+
+export function test_setting_borderColorRGBA_property_from_CSS_is_applied_to_Style() {
+    test_property_from_CSS_is_applied_to_style("borderColor", "border-color", new color.Color("#FF0000"), "rgba(255,0,0,1)");
+}
+
 export function test_setting_borderRadius_property_from_CSS_is_applied_to_Style() {
     test_property_from_CSS_is_applied_to_style("borderRadius", "border-radius", 20);
 }
@@ -176,6 +184,54 @@ export function test_verticalAlignment_property_is_synced_in_style_and_view() {
 
 export function test_horizontalAlignment_property_is_synced_in_style_and_view() {
     test_property_is_synced_in_style_and_view("horizontalAlignment", "right");
+}
+
+export function test_borderTopColor_property_is_synced_in_style_and_view() {
+    test_property_is_synced_in_style_and_view("borderTopColor", new color.Color("red"));
+}
+
+export function test_borderRightColor_property_is_synced_in_style_and_view() {
+    test_property_is_synced_in_style_and_view("borderRightColor", new color.Color("green"));
+}
+
+export function test_borderBottomColor_property_is_synced_in_style_and_view() {
+    test_property_is_synced_in_style_and_view("borderBottomColor", new color.Color("blue"));
+}
+
+export function test_borderLeftColor_property_is_synced_in_style_and_view() {
+    test_property_is_synced_in_style_and_view("borderLeftColor", new color.Color("yellow"));
+}
+
+export function test_borderTopWidth_property_is_synced_in_style_and_view() {
+    test_property_is_synced_in_style_and_view("borderTopWidth", 10);
+}
+
+export function test_borderRightWidth_property_is_synced_in_style_and_view() {
+    test_property_is_synced_in_style_and_view("borderRightWidth", 20);
+}
+
+export function test_borderBottomWidth_property_is_synced_in_style_and_view() {
+    test_property_is_synced_in_style_and_view("borderBottomWidth", 30);
+}
+
+export function test_borderLeftWidth_property_is_synced_in_style_and_view() {
+    test_property_is_synced_in_style_and_view("borderLeftWidth", 40);
+}
+
+export function test_borderTopLeftRadiusWidth_property_is_synced_in_style_and_view() {
+    test_property_is_synced_in_style_and_view("borderTopLeftRadius", 10);
+}
+
+export function test_borderTopRightRadius_property_is_synced_in_style_and_view() {
+    test_property_is_synced_in_style_and_view("borderTopRightRadius", 20);
+}
+
+export function test_borderBottomRightRadius_property_is_synced_in_style_and_view() {
+    test_property_is_synced_in_style_and_view("borderBottomRightRadius", 30);
+}
+
+export function test_borderBottomLeftRadius_property_is_synced_in_style_and_view() {
+    test_property_is_synced_in_style_and_view("borderBottomLeftRadius", 40);
 }
 
 export function test_marginLeft_property_is_synced_in_style_and_view() {
@@ -364,9 +420,65 @@ export function test_setting_different_backgroundColor_triggers_property_change(
     TKUnit.assert(changed, "Property changed not triggered.");
 }
 
+export function test_setting_border_color_shorthand_property_sets_all_border_colors() {
+    let red = new color.Color("red");
+    let green = new color.Color("green");
+    let blue = new color.Color("blue");
+    let yellow = new color.Color("yellow");
+    test_border_color_shorthand_property("red", red, red, red, red);
+    test_border_color_shorthand_property("red green", red, green, red, green);
+    test_border_color_shorthand_property("red green blue", red, green, blue, green);
+    test_border_color_shorthand_property("red green blue yellow", red, green, blue, yellow);
+}
+
+function test_border_color_shorthand_property(short: string, top: color.Color, right: color.Color, bottom: color.Color, left: color.Color) {
+    var testView = new buttonModule.Button();
+    testView.style.borderColor = short;
+
+    TKUnit.assertEqual(testView.style.borderTopColor, top, "top");
+    TKUnit.assertEqual(testView.style.borderRightColor, right, "right");
+    TKUnit.assertEqual(testView.style.borderBottomColor, bottom, "bottom");
+    TKUnit.assertEqual(testView.style.borderLeftColor, left, "left");
+}
+
+export function test_setting_border_width_shorthand_property_sets_all_border_widths() {
+    test_border_width_shorthand_property("10", 10, 10, 10, 10);
+    test_border_width_shorthand_property("10 20", 10, 20, 10, 20);
+    test_border_width_shorthand_property("10 20 30", 10, 20, 30, 20);
+    test_border_width_shorthand_property("10 20 30 40", 10, 20, 30, 40);
+}
+
+function test_border_width_shorthand_property(short: string, top: number, right: number, bottom: number, left: number) {
+    var testView = new buttonModule.Button();
+    testView.style.borderWidth = short;
+
+    TKUnit.assertEqual(testView.style.borderTopWidth, top, "top");
+    TKUnit.assertEqual(testView.style.borderRightWidth, right, "right");
+    TKUnit.assertEqual(testView.style.borderBottomWidth, bottom, "bottom");
+    TKUnit.assertEqual(testView.style.borderLeftWidth, left, "left");
+}
+
+export function test_setting_border_radius_shorthand_property_sets_all_border_radii() {
+    test_border_radius_shorthand_property("10", 10, 10, 10, 10);
+    test_border_radius_shorthand_property("10 20", 10, 20, 10, 20);
+    test_border_radius_shorthand_property("10 20 30", 10, 20, 30, 20);
+    test_border_radius_shorthand_property("10 20 30 40", 10, 20, 30, 40);
+}
+
+function test_border_radius_shorthand_property(short: string, topLeft: number, topRight: number, bottomRight: number, bottomLeft: number) {
+    var testView = new buttonModule.Button();
+    testView.style.borderRadius = short;
+
+    TKUnit.assertEqual(testView.style.borderTopLeftRadius, topLeft, "topLeft");
+    TKUnit.assertEqual(testView.style.borderTopRightRadius, topRight, "topRight");
+    TKUnit.assertEqual(testView.style.borderBottomRightRadius, bottomRight, "bottomRight");
+    TKUnit.assertEqual(testView.style.borderBottomLeftRadius, bottomLeft, "bottomLeft");
+}
+
 export function test_setting_margin_shorthand_property_sets_all_margins() {
     test_margin_shorthand_property("10", 10, 10, 10, 10);
     test_margin_shorthand_property("10 20", 10, 20, 10, 20);
+    test_margin_shorthand_property("10 20 30", 10, 20, 30, 20);
     test_margin_shorthand_property("10 20 30 40", 10, 20, 30, 40);
 }
 
@@ -383,6 +495,7 @@ function test_margin_shorthand_property(short: string, top: number, right: numbe
 export function test_setting_padding_shorthand_property_sets_all_paddings() {
     test_padding_shorthand_property("10", 10, 10, 10, 10);
     test_padding_shorthand_property("10 20", 10, 20, 10, 20);
+    test_padding_shorthand_property("10 20 30", 10, 20, 30, 20);
     test_padding_shorthand_property("10 20 30 40", 10, 20, 30, 40);
 }
 
@@ -416,9 +529,7 @@ function test_font_shorthand_property(short: string, family: string, size: numbe
     TKUnit.assertEqual(testView.style.fontWeight, weight, "style.fontWeight");
     TKUnit.assertEqual(testView.style.fontSize, size, "style.fontSize");
 }
-
 export function test_setting_font_properties_sets_native_font() {
-
     if (fontModule.ios) {
         var basePath = "fonts";
         fontModule.ios.registerFont(basePath + "/Roboto-Regular.ttf");
@@ -456,6 +567,22 @@ function test_native_font(style: string, weight: string) {
         TKUnit.assertEqual((<UIButton>testView.ios).titleLabel.font.fontName.toLowerCase(), (fontName + "-" + fontNameSuffix).toLowerCase(), "native font " + weight + " " + style);
     }
     //TODO: If needed add tests for other platforms
+}
+
+export function test_FontWeightsParsedAsNumbersByTheXmlParserAreConvertedToStrings() {
+    var testView = new buttonModule.Button();
+    // The XML parser will interpret "100" as a number and feed it to Style, so simulate this here.
+    (<any>testView.style).fontWeight = 100; TKUnit.assertEqual(testView.style.fontWeight, "100");
+    (<any>testView.style).fontWeight = 200; TKUnit.assertEqual(testView.style.fontWeight, "200");
+    (<any>testView.style).fontWeight = 300; TKUnit.assertEqual(testView.style.fontWeight, "300");
+    (<any>testView.style).fontWeight = 400; TKUnit.assertEqual(testView.style.fontWeight, "400");
+    (<any>testView.style).fontWeight = "normal"; TKUnit.assertEqual(testView.style.fontWeight, "normal");
+    (<any>testView.style).fontWeight = 500; TKUnit.assertEqual(testView.style.fontWeight, "500");
+    (<any>testView.style).fontWeight = 600; TKUnit.assertEqual(testView.style.fontWeight, "600");
+    (<any>testView.style).fontWeight = 700; TKUnit.assertEqual(testView.style.fontWeight, "700");
+    (<any>testView.style).fontWeight = "bold"; TKUnit.assertEqual(testView.style.fontWeight, "bold");
+    (<any>testView.style).fontWeight = 800; TKUnit.assertEqual(testView.style.fontWeight, "800");
+    (<any>testView.style).fontWeight = 900; TKUnit.assertEqual(testView.style.fontWeight, "900");
 }
 
 export var test_setting_button_whiteSpace_normal_sets_native = function () {
@@ -627,4 +754,61 @@ export var test_setting_button_textTransform_and_textDecoration_sets_native = fu
     testView.style.textDecoration = enums.TextDecoration.underline;
 
     executeTransformTest(testView, androidText, function (v) { return (<UIButton>v.ios).attributedTitleForState(UIControlState.Normal).string; });
+}
+
+export function test_border_color() {
+    let testView = new buttonModule.Button();
+
+    let red = new color.Color("red");
+    testView.style.borderColor = red;
+    TKUnit.assertEqual(testView.style.borderColor, red, "all");
+    TKUnit.assertEqual(testView.style.borderTopColor, red, "top");
+    TKUnit.assertEqual(testView.style.borderRightColor, red, "right");
+    TKUnit.assertEqual(testView.style.borderBottomColor, red, "bottom");
+    TKUnit.assertEqual(testView.style.borderLeftColor, red, "left");
+    
+    let blue = new color.Color("blue");
+    let hex = blue.hex;
+    testView.style.borderColor = hex;
+    TKUnit.assertEqual((<any>testView.style.borderColor), blue, "all");
+    TKUnit.assertEqual(testView.style.borderTopColor, blue, "top");
+    TKUnit.assertEqual(testView.style.borderRightColor, blue, "right");
+    TKUnit.assertEqual(testView.style.borderBottomColor, blue, "bottom");
+    TKUnit.assertEqual(testView.style.borderLeftColor, blue, "left");
+}
+
+export function test_border_width() {
+    let testView = new buttonModule.Button();
+    
+    testView.style.borderWidth = 10;
+    TKUnit.assertEqual(testView.style.borderWidth, 10, "all");
+    TKUnit.assertEqual(testView.style.borderTopWidth, 10, "top");
+    TKUnit.assertEqual(testView.style.borderRightWidth, 10, "right");
+    TKUnit.assertEqual(testView.style.borderBottomWidth, 10, "bottom");
+    TKUnit.assertEqual(testView.style.borderLeftWidth, 10, "left");
+
+    testView.style.borderWidth = "20";
+    TKUnit.assertEqual((<any>testView.style.borderWidth), 20, "all");
+    TKUnit.assertEqual(testView.style.borderTopWidth, 20, "top");
+    TKUnit.assertEqual(testView.style.borderRightWidth, 20, "right");
+    TKUnit.assertEqual(testView.style.borderBottomWidth, 20, "bottom");
+    TKUnit.assertEqual(testView.style.borderLeftWidth, 20, "left");
+}
+
+export function test_border_radius() {
+    let testView = new buttonModule.Button();
+    
+    testView.style.borderRadius = 10;
+    TKUnit.assertEqual(testView.style.borderRadius, 10, "all");
+    TKUnit.assertEqual(testView.style.borderTopLeftRadius, 10, "top");
+    TKUnit.assertEqual(testView.style.borderTopRightRadius, 10, "right");
+    TKUnit.assertEqual(testView.style.borderBottomRightRadius, 10, "bottom");
+    TKUnit.assertEqual(testView.style.borderBottomLeftRadius, 10, "left");
+    
+    testView.style.borderRadius = "20";
+    TKUnit.assertEqual((<any>testView.style.borderRadius), 20, "all");
+    TKUnit.assertEqual(testView.style.borderTopLeftRadius, 20, "top");
+    TKUnit.assertEqual(testView.style.borderTopRightRadius, 20, "right");
+    TKUnit.assertEqual(testView.style.borderBottomRightRadius, 20, "bottom");
+    TKUnit.assertEqual(testView.style.borderBottomLeftRadius, 20, "left");
 }

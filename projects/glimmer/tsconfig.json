@@ -1,12 +1,18 @@
 {
     "compilerOptions": {
         "target": "es2015",
-        "inlineSourceMap": true,
-        "inlineSources": true,
         "moduleResolution": "node",
         "experimentalDecorators": true,
+        "allowUnreachableCode": false,
+        "noUnusedLocals": true,
+        "strictNullChecks": false,
+        "inlineSources": true,
+        "inlineSourceMap": true,
+        "declaration": true,
         "rootDir": "packages",
-        "baseUrl" : "./packages"
+        "baseUrl" : "./packages",
+        "newLine": "LF",
+        "noEmit": true
     },
     "filesGlob": [
       "packages/**.d.ts",

@@ -27,7 +27,8 @@ export function pageLoaded(args: EventData) {
     examples.set("layouts", "layouts/main-page");
     examples.set("pages-events", "pages/main-page");
     examples.set("webview", "web-view/main-page");
-    
+    examples.set("flexbox", "flexbox/flexbox-main-page");
+
     examples.set("modalview", "modal-view/modal-view");
     examples.set("dialogs", "dialogs/dialogs");
     examples.set("htmlview", "html-view/html-view");
@@ -35,11 +36,14 @@ export function pageLoaded(args: EventData) {
     examples.set("animeBG", "animations/background");
     examples.set("transitions", "transitions/page0");
     examples.set("segStyle", "segmented-bar/all");
+    examples.set("list-view", "list-view/list-view");
+    examples.set("issues", "issues/main-page");
+    examples.set("page", "page/main-page");
 
     //examples.set("listview_binding", "pages/listview_binding");
     //examples.set("textfield", "text-field/text-field");
 
-    let viewModel = new MianPageViewModel(wrapLayout, examples);
+    let viewModel = new MainPageViewModel(wrapLayout, examples);
     page.bindingContext = viewModel;
 
      var parent = page.getViewById('parentLayout');
@@ -53,7 +57,7 @@ export function pageLoaded(args: EventData) {
 
     refresh();
 }
-
+  
 // should be removes
 export function refresh() {
     oldExamples.set("actStyle", "action-bar/all");
@@ -139,7 +143,7 @@ export function refresh() {
     oldExamples.set("webtest", "web-view/web-view-test");
 }
 
-export class MianPageViewModel extends observable.Observable {
+export class MainPageViewModel extends observable.Observable {
     private _exampleName: string;
     private basePath: string = "";
     private colors = ["#ff0000", "#0000cc", "#33cc33", "#33cc33"];

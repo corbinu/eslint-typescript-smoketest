@@ -20,10 +20,10 @@ export declare class ComponentFixture<T> {
 }
 
 /** @experimental */
-export declare var ComponentFixtureAutoDetect: OpaqueToken;
+export declare const ComponentFixtureAutoDetect: OpaqueToken;
 
 /** @experimental */
-export declare var ComponentFixtureNoNgZone: OpaqueToken;
+export declare const ComponentFixtureNoNgZone: OpaqueToken;
 
 /** @experimental */
 export declare function discardPeriodicTasks(): void;
@@ -56,7 +56,7 @@ export declare type MetadataOverride<T> = {
 /** @experimental */
 export declare function resetFakeAsyncZone(): void;
 
-/** @experimental */
+/** @stable */
 export declare class TestBed implements Injector {
     ngModule: Type<any>;
     platform: PlatformRef;
@@ -67,7 +67,7 @@ export declare class TestBed implements Injector {
     }): void;
     configureTestingModule(moduleDef: TestModuleMetadata): void;
     createComponent<T>(component: Type<T>): ComponentFixture<T>;
-    execute(tokens: any[], fn: Function): any;
+    execute(tokens: any[], fn: Function, context?: any): any;
     get(token: any, notFoundValue?: any): any;
     /** @experimental */ initTestEnvironment(ngModule: Type<any>, platform: PlatformRef): void;
     overrideComponent(component: Type<any>, override: MetadataOverride<Component>): void;

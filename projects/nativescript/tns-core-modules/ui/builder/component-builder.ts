@@ -28,6 +28,8 @@ var MODULES = {
 var CODEFILE = "codeFile";
 var CSSFILE = "cssFile";
 
+var IMPORT = "import";
+
 var platform: typeof platformModule;
 function ensurePlatform() {
     if (!platform) {
@@ -82,6 +84,17 @@ export function getComponentModule(elementName: string, namespace: string, attri
     }
 
     if (attributes) {
+        if (attributes[IMPORT]) {
+            var importPath = attributes[IMPORT].trim();
+
+            if (importPath.indexOf("~/") === 0) {
+                importPath = path.join(knownFolders.currentApp().path, importPath.replace("~/", ""));
+            }
+
+            exports = global.loadModule(importPath);
+            (<any>instance).exports = exports;
+        }
+
         if (attributes[CODEFILE]) {
             if (instance instanceof Page) {
                 var codeFilePath = attributes[CODEFILE].trim();
@@ -164,7 +177,6 @@ export function getComponentModule(elementName: string, namespace: string, attri
 
 export function setPropertyValue(instance: View, instanceModule: Object, exports: Object, propertyName: string, propertyValue: any) {
     // Note: instanceModule can be null if we are loading custom compnenet with no code-behind.
-
     if (isBinding(propertyValue) && instance.bind) {
         var bindOptions = getBindingOptions(propertyName, getBindingExpressionFromAttribute(propertyValue));
         instance.bind({
@@ -173,7 +185,8 @@ export function setPropertyValue(instance: View, instanceModule: Object, exports
             expression: bindOptions[bindingConstants.expression],
             twoWay: bindOptions[bindingConstants.twoWay]
         }, bindOptions[bindingConstants.source]);
-    } else if (isEventOrGesture(propertyName, instance)) {
+    } 
+    else if (isEventOrGesture(propertyName, instance)) {
         // Get the event handler from page module exports.
         var handler = exports && exports[propertyValue];
 
@@ -181,7 +194,11 @@ export function setPropertyValue(instance: View, instanceModule: Object, exports
         if (isFunction(handler)) {
             instance.on(propertyName, handler);
         }
-    } else {
+    }
+    else if (isKnownFunction(propertyName, instance) && isFunction(exports && exports[propertyValue])) {
+        instance[propertyName] = exports[propertyValue];             
+    }
+    else {
         let attrHandled = false;
         let specialSetter = getSpecialPropertySetter(propertyName);
         if (!attrHandled && specialSetter) {
@@ -210,4 +227,12 @@ function isBinding(value: any): boolean {
     }
 
     return isBinding;
+}
+
+// For example, ListView.itemTemplateSelector
+let KNOWN_FUNCTIONS = "knownFunctions";
+function isKnownFunction(name: string, instance: View): boolean {
+    return instance.constructor 
+        && KNOWN_FUNCTIONS in instance.constructor 
+        && instance.constructor[KNOWN_FUNCTIONS].indexOf(name) !== -1;
 }

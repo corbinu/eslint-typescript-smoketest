@@ -8,6 +8,7 @@ import {StackLayout} from "ui/layouts/stack-layout";
 import {ProxyViewContainer} from "ui/proxy-view-container";
 import dependencyObservable = require("ui/core/dependency-observable");
 import * as colorModule from "color";
+import { separatorColorProperty, registerHandler, Styler, StylePropertyChangedHandler } from "ui/styling/style";
 
 var color: typeof colorModule;
 function ensureColor() {
@@ -16,7 +17,7 @@ function ensureColor() {
     }
 }
 
-var CELLIDENTIFIER = "cell";
+//var CELLIDENTIFIER = "cell";
 var ITEMLOADING = common.ListView.itemLoadingEvent;
 var LOADMOREITEMS = common.ListView.loadMoreItemsEvent;
 var ITEMTAP = common.ListView.itemTapEvent;
@@ -68,9 +69,11 @@ class DataSource extends NSObject implements UITableViewDataSource {
 
     public tableViewCellForRowAtIndexPath(tableView: UITableView, indexPath: NSIndexPath): UITableViewCell {
         // We call this method because ...ForIndexPath calls tableViewHeightForRowAtIndexPath immediately (before we can prepare and measure it).
-        let cell = <ListViewCell>(tableView.dequeueReusableCellWithIdentifier(CELLIDENTIFIER) || ListViewCell.new());
         let owner = this._owner.get();
+        let cell: ListViewCell;
         if (owner) {
+            let template = owner._getItemTemplate(indexPath.row);
+            cell = <ListViewCell>(tableView.dequeueReusableCellWithIdentifier(template.key) || ListViewCell.new());
             owner._prepareCell(cell, indexPath);
 
             let cellView: view.View = cell.view;
@@ -83,6 +86,9 @@ class DataSource extends NSObject implements UITableViewDataSource {
                 view.View.layoutChild(owner, cellView, 0, 0, width, cellHeight);
             }
         }
+        else {
+            cell = <ListViewCell>ListViewCell.new();
+        }
         return cell;
     }
 }
@@ -91,11 +97,13 @@ class UITableViewDelegateImpl extends NSObject implements UITableViewDelegate {
     public static ObjCProtocols = [UITableViewDelegate];
 
     private _owner: WeakRef<ListView>;
-    private _measureCell: ListViewCell;
+    
+    private _measureCellMap: Map<string, ListViewCell>;
 
     public static initWithOwner(owner: WeakRef<ListView>): UITableViewDelegateImpl {
         let delegate = <UITableViewDelegateImpl>UITableViewDelegateImpl.new();
         delegate._owner = owner;
+        delegate._measureCellMap = new Map<string, ListViewCell>();
         return delegate;
     }
 
@@ -134,10 +142,11 @@ class UITableViewDelegateImpl extends NSObject implements UITableViewDelegate {
 
         if (utils.ios.MajorVersion < 8 || height === undefined) {
             // in iOS 7.1 (or iOS8+ after call to scrollToRowAtIndexPath:atScrollPosition:animated:) this method is called before tableViewCellForRowAtIndexPath so we need fake cell to measure its content.
-            let cell = this._measureCell;
+            let template = owner._getItemTemplate(indexPath.row);
+            let cell = this._measureCellMap.get(template.key);
             if (!cell) {
-                this._measureCell = (<any>tableView.dequeueReusableCellWithIdentifier(CELLIDENTIFIER)) || ListViewCell.new();
-                cell = this._measureCell;
+                cell = (<any>tableView.dequeueReusableCellWithIdentifier(template.key)) || ListViewCell.new();
+                this._measureCellMap.set(template.key, cell);
             }
 
             height = owner._prepareCell(cell, indexPath);
@@ -185,15 +194,15 @@ class UITableViewRowHeightDelegateImpl extends NSObject implements UITableViewDe
 }
 
 function onSeparatorColorPropertyChanged(data: dependencyObservable.PropertyChangeData) {
-    var bar = <ListView>data.object;
-    if (!bar.ios) {
+    var listView = <ListView>data.object;
+    if (!listView.ios) {
         return;
     }
 
     ensureColor();
 
     if (data.newValue instanceof color.Color) {
-        bar.ios.separatorColor = data.newValue.ios;
+        listView.ios.separatorColor = data.newValue.ios;
     }
 }
 
@@ -214,7 +223,7 @@ export class ListView extends common.ListView {
     constructor() {
         super();
         this._ios = UITableView.new();
-        this._ios.registerClassForCellReuseIdentifier(ListViewCell.class(), CELLIDENTIFIER);
+        this._ios.registerClassForCellReuseIdentifier(ListViewCell.class(), this._defaultTemplate.key);
         this._ios.autoresizingMask = UIViewAutoresizing.None;
         this._ios.estimatedRowHeight = DEFAULT_HEIGHT;
         this._ios.rowHeight = UITableViewAutomaticDimension;
@@ -222,6 +231,18 @@ export class ListView extends common.ListView {
         this._delegate = UITableViewDelegateImpl.initWithOwner(new WeakRef(this));
         this._heights = new Array<number>();
         this._map = new Map<ListViewCell, view.View>();
+    }
+
+    public _onItemTemplatesPropertyChanged(data: dependencyObservable.PropertyChangeData) {
+        this._itemTemplatesInternal = new Array<view.KeyedTemplate>(this._defaultTemplate); 
+        if (data.newValue) {
+            for(let i = 0, length = data.newValue.length; i < length; i++){
+                let template = <view.KeyedTemplate>data.newValue[i];
+                this._ios.registerClassForCellReuseIdentifier(ListViewCell.class(), template.key);
+            }
+            this._itemTemplatesInternal = this._itemTemplatesInternal.concat(data.newValue);
+        }
+        this.refresh();
     }
 
     public onLoaded() {
@@ -336,7 +357,7 @@ export class ListView extends common.ListView {
             this._preparingCell = true;
             let view = cell.view;
             if (!view) {
-                view = this._getItemTemplateContent(indexPath.row);
+                view = this._getItemTemplate(indexPath.row).createView();
             }
 
             let args = notifyForItemAtIndex(this, cell, view, ITEMLOADING, indexPath);
@@ -385,3 +406,30 @@ export class ListView extends common.ListView {
         this._map.delete(cell);
     }
 }
+
+export class ListViewStyler implements Styler {
+    // separator-color
+    private static setSeparatorColorProperty(view: view.View, newValue: any) {
+        let tableView = <UITableView>view._nativeView;
+        tableView.separatorColor = newValue;
+    }
+
+    private static resetSeparatorColorProperty(view: view.View, nativeValue: any) {
+        let tableView = <UITableView>view._nativeView;
+        tableView.separatorColor = nativeValue;
+    }
+
+    private static getSeparatorColorProperty(view: view.View): any {
+        let tableView = <UITableView>view._nativeView;
+        return tableView.separatorColor;
+    }
+
+    public static registerHandlers() {
+        registerHandler(separatorColorProperty, new StylePropertyChangedHandler(
+            ListViewStyler.setSeparatorColorProperty,
+            ListViewStyler.resetSeparatorColorProperty,
+            ListViewStyler.getSeparatorColorProperty), "ListView");
+    }
+}
+
+ListViewStyler.registerHandlers();

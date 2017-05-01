@@ -6,7 +6,11 @@
  * found in the LICENSE file at https://angular.io/license
  */
 
-import {ActivatedRoute, ActivatedRouteSnapshot, RouterState, RouterStateSnapshot} from '../src/router_state';
+import {BehaviorSubject} from 'rxjs/BehaviorSubject';
+
+import {ActivatedRoute, ActivatedRouteSnapshot, RouterState, RouterStateSnapshot, advanceActivatedRoute, equalParamsAndUrlSegments} from '../src/router_state';
+import {Params} from '../src/shared';
+import {UrlSegment} from '../src/url_tree';
 import {TreeNode} from '../src/utils/tree';
 
 describe('RouterState & Snapshot', () => {
@@ -93,6 +97,61 @@ describe('RouterState & Snapshot', () => {
       expect(p[1]).toBe(b);
     });
   });
+
+  describe('equalParamsAndUrlSegments', () => {
+    function createSnapshot(params: Params, url: UrlSegment[]): ActivatedRouteSnapshot {
+      return new ActivatedRouteSnapshot(
+          url, params, <any>null, <any>null, <any>null, <any>null, <any>null, <any>null, <any>null,
+          -1, null);
+    }
+
+    it('should return false when params are different', () => {
+      expect(equalParamsAndUrlSegments(createSnapshot({a: 1}, []), createSnapshot({a: 2}, [])))
+          .toEqual(false);
+    });
+
+    it('should return false when urls are different', () => {
+      expect(equalParamsAndUrlSegments(
+                 createSnapshot({a: 1}, [new UrlSegment('a', {})]),
+                 createSnapshot({a: 1}, [new UrlSegment('b', {})])))
+          .toEqual(false);
+    });
+
+    it('should return true othewise', () => {
+      expect(equalParamsAndUrlSegments(
+                 createSnapshot({a: 1}, [new UrlSegment('a', {})]),
+                 createSnapshot({a: 1}, [new UrlSegment('a', {})])))
+          .toEqual(true);
+    });
+  });
+
+  describe('advanceActivatedRoute', () => {
+
+    let route: ActivatedRoute;
+
+    beforeEach(() => { route = createActivatedRoute('a'); });
+
+    function createSnapshot(params: Params, url: UrlSegment[]): ActivatedRouteSnapshot {
+      const queryParams = {};
+      const fragment = '';
+      const data = {};
+      return new ActivatedRouteSnapshot(
+          url, params, queryParams, fragment, data, <any>null, <any>null, <any>null, <any>null, -1,
+          null);
+    }
+
+    it('should call change observers', () => {
+      const firstPlace = createSnapshot({a: 1}, []);
+      const secondPlace = createSnapshot({a: 2}, []);
+      route.snapshot = firstPlace;
+      route._futureSnapshot = secondPlace;
+
+      let hasSeenDataChange = false;
+      route.data.forEach((data) => { hasSeenDataChange = true; });
+      advanceActivatedRoute(route);
+      expect(hasSeenDataChange).toEqual(true);
+    });
+  });
 });
 
 function createActivatedRouteSnapshot(cmp: string) {
@@ -103,5 +162,6 @@ function createActivatedRouteSnapshot(cmp: string) {
 
 function createActivatedRoute(cmp: string) {
   return new ActivatedRoute(
-      <any>null, <any>null, <any>null, <any>null, <any>null, <any>null, <any>cmp, <any>null);
+      new BehaviorSubject([new UrlSegment('', {})]), new BehaviorSubject({}), <any>null, <any>null,
+      new BehaviorSubject({}), <any>null, <any>cmp, <any>null);
 }

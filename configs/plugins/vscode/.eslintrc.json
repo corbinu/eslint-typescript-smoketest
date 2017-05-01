@@ -1,0 +1,6 @@
+{
+	"rules": {
+		"import/newline-after-import": "off"
+	},
+	"extends": ["../../.main.json"]
+}

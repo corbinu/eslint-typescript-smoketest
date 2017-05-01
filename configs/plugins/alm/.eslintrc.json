@@ -1,0 +1,22 @@
+{
+	"plugins": [
+		"react"
+	],
+	"parserOptions": {
+		"ecmaFeatures": {
+			"jsx": true
+		}
+	},
+	"rules": {
+		"react/no-unescaped-entities": "off",
+		"react/self-closing-comp": "off",
+		"react/void-dom-elements-no-children": "off",
+		"react/jsx-indent": "off",
+		"react/jsx-indent-props": "off",
+		"react/jsx-max-props-per-line": "off"
+	},
+	"extends": [
+		"../../.main.json",
+		"plugin:react/recommended"
+	]
+}

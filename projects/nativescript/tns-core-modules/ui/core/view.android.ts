@@ -12,6 +12,8 @@ import background = require("ui/styling/background");
 import {CommonLayoutParams} from "ui/styling/style";
 import {device} from "platform";
 
+var flexbox;
+
 global.moduleMerge(viewCommon, exports);
 
 var ANDROID = "_android";
@@ -20,13 +22,13 @@ var VIEW_GROUP = "_viewGroup";
 
 function onAutomationTextPropertyChanged(data: dependencyObservable.PropertyChangeData) {
     var view = <View>data.object;
-    view._nativeView.setContentDescription(data.newValue);
+    view._nativeView.setContentDescription(data.newValue + "");
 }
 (<proxy.PropertyMetadata>viewCommon.View.automationTextProperty.metadata).onSetNativeValue = onAutomationTextPropertyChanged;
 
 function onIdPropertyChanged(data: dependencyObservable.PropertyChangeData) {
     var view = <View>data.object;
-    view._nativeView.setTag(data.newValue);
+    view._nativeView.setTag(data.newValue + "");
 }
 (<proxy.PropertyMetadata>viewCommon.View.idProperty.metadata).onSetNativeValue = onIdPropertyChanged;
 
@@ -150,12 +152,16 @@ export class View extends viewCommon.View {
         }
     }
 
-    public _addViewCore(view: viewCommon.View, atIndex?: number) {
+    public _addViewCore(view: View, atIndex?: number) {
         if (this._context) {
             view._onAttached(this._context);
         }
 
         super._addViewCore(view, atIndex);
+
+        if (this._context) {
+            view._syncNativeProperties();
+        }
     }
 
     public _removeViewCore(view: viewCommon.View) {
@@ -189,12 +195,14 @@ export class View extends viewCommon.View {
         if (this._childrenCount > 0) {
             // Notify each child for the _onAttached event
             var that = this;
-            var eachChild = function (child: View): boolean {
+            var eachChild = (child: View): boolean => {
                 child._onAttached(context);
                 if (!child._isAddedToNativeVisualTree) {
                     // since we have lazy loading of the android widgets, we need to add the native instances at this point.
                     child._isAddedToNativeVisualTree = that._addViewToNativeVisualTree(child);
                 }
+                child._syncNativeProperties();
+
                 return true;
             }
             this._eachChildView(eachChild);
@@ -260,7 +268,7 @@ export class View extends viewCommon.View {
         padding = this.style.paddingTop;
         padding = this.style.paddingRight;
         padding = this.style.paddingBottom;
-        this._syncNativeProperties();
+
         trace.notifyEvent(this, "_onContextChanged");
     }
 
@@ -601,6 +609,13 @@ export class ViewStyler implements style.Styler {
             lp.rightMargin = Math.round(params.rightMargin * utils.layout.getDisplayDensity());
             lp.bottomMargin = Math.round(params.bottomMargin * utils.layout.getDisplayDensity());
             lp.gravity = gravity;
+
+            if (lp instanceof org.nativescript.widgets.FlexboxLayout.LayoutParams) {
+                if (!flexbox) {
+                    flexbox = require("ui/layouts/flexbox-layout");
+                }
+                flexbox._setAndroidLayoutParams(lp, view);
+            }
         }
         else {
             let layoutParams: any = lp;
@@ -679,7 +694,7 @@ export class ViewStyler implements style.Styler {
     private static setNativePaddingLeft(view: View, value: number): void {
         let nativeView = view._nativeView;
         let density = utils.layout.getDisplayDensity();
-        let left = (value + view.borderWidth) * density;
+        let left = (value + view.borderLeftWidth) * density;
         let top = nativeView.getPaddingTop();
         let right = nativeView.getPaddingRight();
         let bottom = nativeView.getPaddingBottom();
@@ -690,7 +705,7 @@ export class ViewStyler implements style.Styler {
         let nativeView = view._nativeView;
         let density = utils.layout.getDisplayDensity();
         let left = nativeView.getPaddingLeft();
-        let top = (value + view.borderWidth) * density;
+        let top = (value + view.borderTopWidth) * density;
         let right = nativeView.getPaddingRight();
         let bottom = nativeView.getPaddingBottom();
         nativeView.setPadding(left, top, right, bottom);
@@ -701,7 +716,7 @@ export class ViewStyler implements style.Styler {
         let density = utils.layout.getDisplayDensity();
         let left = nativeView.getPaddingLeft();
         let top = nativeView.getPaddingTop();
-        let right = (value + view.borderWidth) * density;
+        let right = (value + view.borderRightWidth) * density;
         let bottom = nativeView.getPaddingBottom();
         nativeView.setPadding(left, top, right, bottom);
     }
@@ -712,7 +727,7 @@ export class ViewStyler implements style.Styler {
         let left = nativeView.getPaddingLeft();
         let top = nativeView.getPaddingTop();
         let right = nativeView.getPaddingRight();
-        let bottom = (value + view.borderWidth) * density;
+        let bottom = (value + view.borderBottomWidth) * density;
         nativeView.setPadding(left, top, right, bottom);
     }
 
@@ -771,7 +786,7 @@ export class ViewStyler implements style.Styler {
             view.android.setZ(newValue);
 
             if (view.android instanceof android.widget.Button) {
-                view.android.setStateListAnimator(null);
+                (<any>view.android).setStateListAnimator(null);
             }
         }
     }
@@ -801,11 +816,9 @@ export class ViewStyler implements style.Styler {
 
         // Use the same handler for all background/border properties
         // Note: There is no default value getter - the default value is handled in background.ad.onBackgroundOrBorderPropertyChanged
-        var backgroundAndBorderHandler = new style.StylePropertyChangedHandler(
+        style.registerHandler(style.backgroundInternalProperty, new style.StylePropertyChangedHandler(
             ViewStyler.setBackgroundAndBorder,
-            ViewStyler.resetBackgroundAndBorder);
-
-        style.registerHandler(style.backgroundInternalProperty, backgroundAndBorderHandler);
+            ViewStyler.resetBackgroundAndBorder));
 
         style.registerHandler(style.nativeLayoutParamsProperty, new style.StylePropertyChangedHandler(
             ViewStyler.setNativeLayoutParamsProperty,

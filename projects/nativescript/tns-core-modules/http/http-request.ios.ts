@@ -13,12 +13,35 @@ import getter = utils.ios.getter;
 
 import domainDebugger = require("./../debugger/debugger");
 
+var device = utils.ios.getter(UIDevice, UIDevice.currentDevice).userInterfaceIdiom === UIUserInterfaceIdiom.Phone ? "Phone" : "Pad";
+
 var GET = "GET";
 var USER_AGENT_HEADER = "User-Agent";
-var USER_AGENT = "Mozilla/5.0 (iPad; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5355d Safari/8536.25";
+var USER_AGENT = `Mozilla/5.0 (i${device}; CPU OS 6_0 like Mac OS X) AppleWebKit/536.26 (KHTML, like Gecko) Version/6.0 Mobile/10A5355d Safari/8536.25`;
 var sessionConfig = getter(NSURLSessionConfiguration, NSURLSessionConfiguration.defaultSessionConfiguration);
 var queue = getter(NSOperationQueue, NSOperationQueue.mainQueue);
-var session = NSURLSession.sessionWithConfigurationDelegateDelegateQueue(sessionConfig, null, queue);
+
+class NSURLSessionTaskDelegateImpl extends NSObject implements NSURLSessionTaskDelegate {
+    public static ObjCProtocols = [NSURLSessionTaskDelegate];
+    public URLSessionTaskWillPerformHTTPRedirectionNewRequestCompletionHandler(session: NSURLSession, task: NSURLSessionTask, response: NSHTTPURLResponse, request: NSURLRequest, completionHandler: (p1: NSURLRequest) => void): void {
+        completionHandler(null);
+    }
+}
+var sessionTaskDelegateInstance: NSURLSessionTaskDelegateImpl = <NSURLSessionTaskDelegateImpl>NSURLSessionTaskDelegateImpl.new();
+
+var defaultSession;
+function ensureDefaultSession() {
+    if (!defaultSession) {
+        defaultSession = NSURLSession.sessionWithConfigurationDelegateDelegateQueue(sessionConfig, null, queue);
+    }
+}
+
+var sessionNotFollowingRedirects;
+function ensureSessionNotFollowingRedirects() {
+    if (!sessionNotFollowingRedirects) {
+        sessionNotFollowingRedirects = NSURLSession.sessionWithConfigurationDelegateDelegateQueue(sessionConfig, sessionTaskDelegateInstance, queue);
+    }
+}
 
 var imageSource: typeof imageSourceModule;
 function ensureImageSource() {
@@ -31,7 +54,8 @@ export function request(options: http.HttpRequestOptions): Promise<http.HttpResp
     return new Promise<http.HttpResponse>((resolve, reject) => {
 
         try {
-            var debugRequest = domainDebugger.network && domainDebugger.network.create();
+            var network = domainDebugger.getNetwork();
+            var debugRequest = network && network.create();
 
             var urlRequest = NSMutableURLRequest.requestWithURL(
                 NSURL.URLWithString(options.url));
@@ -54,6 +78,15 @@ export function request(options: http.HttpRequestOptions): Promise<http.HttpResp
                 urlRequest.timeoutInterval = options.timeout / 1000;
             }
 
+            var session;
+            if (types.isBoolean(options.dontFollowRedirects) && options.dontFollowRedirects) {
+                ensureSessionNotFollowingRedirects();
+                session = sessionNotFollowingRedirects;
+            } else {
+                ensureDefaultSession();
+                session = defaultSession;
+            }
+
             var dataTask = session.dataTaskWithRequestCompletionHandler(urlRequest,
                 function (data: NSData, response: NSHTTPURLResponse, error: NSError) {
                     if (error) {
@@ -62,12 +95,12 @@ export function request(options: http.HttpRequestOptions): Promise<http.HttpResp
                         var headers: http.Headers = {};
                         if (response && response.allHeaderFields) {
                             var headerFields = response.allHeaderFields;
-                            
+
                             headerFields.enumerateKeysAndObjectsUsingBlock((key, value, stop) => {
                                 (<any>http).addHeader(headers, key, value);
                             });
                         }
-                        
+
                         if (debugRequest) {
                             debugRequest.mimeType = response.MIMEType;
                             debugRequest.data = data;
@@ -86,9 +119,9 @@ export function request(options: http.HttpRequestOptions): Promise<http.HttpResp
                         resolve({
                             content: {
                                 raw: data,
-                                toString: () => { return NSDataToString(data); },
-                                toJSON: () => {
-                                    return utils.parseJSON(NSDataToString(data));
+                                toString: (encoding?: http.HttpResponseEncoding) => { return NSDataToString(data, encoding); },
+                                toJSON: (encoding?: http.HttpResponseEncoding) => {
+                                    return utils.parseJSON(NSDataToString(data, encoding));
                                 },
                                 toImage: () => {
                                     ensureImageSource();
@@ -122,7 +155,7 @@ export function request(options: http.HttpRequestOptions): Promise<http.HttpResp
                     }
                 });
 
-            if(options.url && debugRequest) {
+            if (options.url && debugRequest) {
                 var request = {
                     url: options.url,
                     method: "GET",
@@ -138,6 +171,10 @@ export function request(options: http.HttpRequestOptions): Promise<http.HttpResp
     });
 }
 
-function NSDataToString(data: any): string {
-    return NSString.alloc().initWithDataEncoding(data, 4).toString();
+function NSDataToString(data: any, encoding?: http.HttpResponseEncoding): string {
+    let code = 4; //UTF8
+    if (encoding === http.HttpResponseEncoding.GBK) {
+        code = 1586;
+    }
+    return NSString.alloc().initWithDataEncoding(data, code).toString();
 }

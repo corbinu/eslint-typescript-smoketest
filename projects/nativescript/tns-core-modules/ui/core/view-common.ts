@@ -10,13 +10,13 @@ import utils = require("utils/utils");
 import color = require("color");
 import observable = require("data/observable");
 import keyframeAnimationModule = require("ui/animation/keyframe-animation");
-import {PropertyMetadata, ProxyObject} from "ui/core/proxy";
-import {PropertyMetadataSettings, PropertyChangeData, Property, ValueSource, PropertyMetadata as doPropertyMetadata} from "ui/core/dependency-observable";
-import {registerSpecialProperty} from "ui/builder/special-properties";
-import {CommonLayoutParams, nativeLayoutParamsProperty} from "ui/styling/style";
+import { PropertyMetadata, ProxyObject } from "ui/core/proxy";
+import { PropertyMetadataSettings, PropertyChangeData, Property, ValueSource, PropertyMetadata as doPropertyMetadata } from "ui/core/dependency-observable";
+import { registerSpecialProperty } from "ui/builder/special-properties";
+import { CommonLayoutParams, nativeLayoutParamsProperty } from "ui/styling/style";
 import * as animModule from "ui/animation";
-import {CssState} from "ui/styling/style-scope";
-import {Source} from "utils/debug";
+import { CssState } from "ui/styling/style-scope";
+import { Source } from "utils/debug";
 
 registerSpecialProperty("class", (instance: definition.View, propertyValue: string) => {
     instance.className = propertyValue;
@@ -99,7 +99,7 @@ export function getAncestor(view: View, criterion: string | Function): definitio
     return null;
 }
 
-export function PseudoClassHandler(... pseudoClasses: string[]): MethodDecorator {
+export function PseudoClassHandler(...pseudoClasses: string[]): MethodDecorator {
     let stateEventNames = pseudoClasses.map(s => ":" + s);
     let listeners = Symbol("listeners");
     return <T>(target: Object, propertyKey: string | symbol, descriptor: TypedPropertyDescriptor<T>) => {
@@ -279,25 +279,109 @@ export class View extends ProxyObject implements definition.View {
     }
 
     // START Style property shortcuts
-    get borderRadius(): number {
-        return this.style.borderRadius;
+    get borderColor(): string | color.Color {
+        return this.style.borderColor;
     }
-    set borderRadius(value: number) {
-        this.style.borderRadius = value;
+    set borderColor(value: string | color.Color) {
+        this.style.borderColor = value;
     }
 
-    get borderWidth(): number {
+    get borderTopColor(): color.Color {
+        return this.style.borderTopColor;
+    }
+    set borderTopColor(value: color.Color) {
+        this.style.borderTopColor = value;
+    }
+
+    get borderRightColor(): color.Color {
+        return this.style.borderRightColor;
+    }
+    set borderRightColor(value: color.Color) {
+        this.style.borderRightColor = value;
+    }
+
+    get borderBottomColor(): color.Color {
+        return this.style.borderBottomColor;
+    }
+    set borderBottomColor(value: color.Color) {
+        this.style.borderBottomColor = value;
+    }
+
+    get borderLeftColor(): color.Color {
+        return this.style.borderLeftColor;
+    }
+    set borderLeftColor(value: color.Color) {
+        this.style.borderLeftColor = value;
+    }
+
+    get borderWidth(): string | number {
         return this.style.borderWidth;
     }
-    set borderWidth(value: number) {
+    set borderWidth(value: string | number) {
         this.style.borderWidth = value;
     }
 
-    get borderColor(): color.Color {
-        return this.style.borderColor;
+    get borderTopWidth(): number {
+        return this.style.borderTopWidth;
     }
-    set borderColor(value: color.Color) {
-        this.style.borderColor = value;
+    set borderTopWidth(value: number) {
+        this.style.borderTopWidth = value;
+    }
+
+    get borderRightWidth(): number {
+        return this.style.borderRightWidth;
+    }
+    set borderRightWidth(value: number) {
+        this.style.borderRightWidth = value;
+    }
+
+    get borderBottomWidth(): number {
+        return this.style.borderBottomWidth;
+    }
+    set borderBottomWidth(value: number) {
+        this.style.borderBottomWidth = value;
+    }
+
+    get borderLeftWidth(): number {
+        return this.style.borderLeftWidth;
+    }
+    set borderLeftWidth(value: number) {
+        this.style.borderLeftWidth = value;
+    }
+
+    get borderRadius(): string | number {
+        return this.style.borderRadius;
+    }
+    set borderRadius(value: string | number) {
+        this.style.borderRadius = value;
+    }
+
+    get borderTopLeftRadius(): number {
+        return this.style.borderTopLeftRadius;
+    }
+    set borderTopLeftRadius(value: number) {
+        this.style.borderTopLeftRadius = value;
+    }
+
+    get borderTopRightRadius(): number {
+        return this.style.borderTopRightRadius;
+    }
+    set borderTopRightRadius(value: number) {
+        this.style.borderTopRightRadius = value;
+    }
+
+    get borderBottomRightRadius(): number {
+        return this.style.borderBottomRightRadius;
+    }
+    set borderBottomRightRadius(value: number) {
+        this.style.borderBottomRightRadius = value;
+    }
+
+    get borderBottomLeftRadius(): number {
+        return this.style.borderBottomLeftRadius;
+    }
+    set borderBottomLeftRadius(value: number) {
+        this.style.borderBottomLeftRadius = value;
     }
 
     get color(): color.Color {
@@ -468,6 +552,11 @@ export class View extends ProxyObject implements definition.View {
     }
     set isEnabled(value: boolean) {
         this._setValue(View.isEnabledProperty, value);
+        if (value === false) {
+            this._goToVisualState('disabled');
+        } else {
+            this._goToVisualState('normal');
+        }
     }
 
     get page(): definition.View {
@@ -558,8 +647,7 @@ export class View extends ProxyObject implements definition.View {
     }
 
     public onUnloaded() {
-        this._onCssStateChange(this._cssState, null);
-        this._cssState = null;
+        this._setCssState(null);
 
         this._unloadEachChildView();
 
@@ -643,6 +731,12 @@ export class View extends ProxyObject implements definition.View {
         return this._measuredHeight & utils.layout.MEASURED_SIZE_MASK;
     }
 
+    public getMeasuredState(): number {
+        return (this._measuredWidth & utils.layout.MEASURED_STATE_MASK)
+            | ((this._measuredHeight >> utils.layout.MEASURED_HEIGHT_STATE_SHIFT)
+                & (utils.layout.MEASURED_STATE_MASK >> utils.layout.MEASURED_HEIGHT_STATE_SHIFT));
+    }
+
     public setMeasuredDimension(measuredWidth: number, measuredHeight: number): void {
         this._measuredWidth = measuredWidth;
         this._measuredHeight = measuredHeight;
@@ -667,17 +761,41 @@ export class View extends ProxyObject implements definition.View {
         //
     }
 
+    private pseudoClassAliases = {
+        'highlighted': [
+            'active',
+            'pressed'
+        ]
+    };
+
+    private getAllAliasedStates(name: string): Array<string> {
+        let allStates = [];
+        allStates.push(name);
+        if (name in this.pseudoClassAliases) {
+            for (let i = 0; i < this.pseudoClassAliases[name].length; i++) {
+                allStates.push(this.pseudoClassAliases[name][i]);
+            }
+        }
+        return allStates;
+    }
+
     public addPseudoClass(name: string): void {
-        if (!this.cssPseudoClasses.has(name)) {
-            this.cssPseudoClasses.add(name);
-            this.notifyPseudoClassChanged(name);
+        let allStates = this.getAllAliasedStates(name);
+        for (let i = 0; i < allStates.length; i++) {
+            if (!this.cssPseudoClasses.has(allStates[i])) {
+                this.cssPseudoClasses.add(allStates[i]);
+                this.notifyPseudoClassChanged(allStates[i]);
+            }
         }
     }
 
     public deletePseudoClass(name: string): void {
-        if (this.cssPseudoClasses.has(name)) {
-            this.cssPseudoClasses.delete(name);
-            this.notifyPseudoClassChanged(name);
+        let allStates = this.getAllAliasedStates(name);
+        for (let i = 0; i < allStates.length; i++) {
+            if (this.cssPseudoClasses.has(allStates[i])) {
+                this.cssPseudoClasses.delete(allStates[i]);
+                this.notifyPseudoClassChanged(allStates[i]);
+            }
         }
     }
 
@@ -700,6 +818,10 @@ export class View extends ProxyObject implements definition.View {
         }
 
         return Math.round(result + 0.499) | (childMeasuredState & utils.layout.MEASURED_STATE_MASK);
+    }
+
+    public static combineMeasuredStates(curState: number, newState): number {
+        return curState | newState;
     }
 
     public static layoutChild(parent: View, child: View, left: number, top: number, right: number, bottom: number): void {
@@ -886,6 +1008,75 @@ export class View extends ProxyObject implements definition.View {
         return changed;
     }
 
+    protected static adjustChildLayoutParams(view: View, widthMeasureSpec: number, heightMeasureSpec: number): void {
+        if (!view) {
+            return;
+        }
+
+        let availableWidth = utils.layout.getMeasureSpecSize(widthMeasureSpec);
+        let widthSpec = utils.layout.getMeasureSpecMode(widthMeasureSpec);
+
+        let availableHeight = utils.layout.getMeasureSpecSize(heightMeasureSpec);
+        let heightSpec = utils.layout.getMeasureSpecMode(heightMeasureSpec);
+
+        let lp: CommonLayoutParams = view.style._getValue(style.nativeLayoutParamsProperty);
+
+        if (widthSpec !== utils.layout.UNSPECIFIED) {
+            if (lp.widthPercent > 0) {
+                lp.width = Math.round(availableWidth * lp.widthPercent);
+            }
+
+            if (lp.leftMarginPercent > 0) {
+                lp.leftMargin = Math.round(availableWidth * lp.leftMarginPercent);
+            }
+
+            if (lp.rightMarginPercent > 0) {
+                lp.rightMargin = Math.round(availableWidth * lp.rightMarginPercent);
+            }
+        }
+
+        if (heightSpec !== utils.layout.UNSPECIFIED) {
+            if (lp.heightPercent > 0) {
+                lp.height = Math.round(availableHeight * lp.heightPercent);
+            }
+
+            if (lp.topMarginPercent > 0) {
+                lp.topMargin = Math.round(availableHeight * lp.topMarginPercent);
+            }
+
+            if (lp.bottomMarginPercent > 0) {
+                lp.bottomMargin = Math.round(availableHeight * lp.bottomMarginPercent);
+            }
+        }
+    }
+
+    protected static restoreChildOriginalParams(view: View): void {
+        if (!view) {
+            return;
+        }
+        let lp: CommonLayoutParams = view.style._getValue(style.nativeLayoutParamsProperty);
+
+        if (lp.widthPercent > 0) {
+            lp.width = -1;
+        }
+
+        if (lp.heightPercent > 0) {
+            lp.height = -1;
+        }
+        if (lp.leftMarginPercent > 0) {
+            lp.leftMargin = 0;
+        }
+        if (lp.topMarginPercent > 0) {
+            lp.topMargin = 0;
+        }
+        if (lp.rightMarginPercent > 0) {
+            lp.rightMargin = 0;
+        }
+        if (lp.bottomMarginPercent > 0) {
+            lp.bottomMargin = 0;
+        }
+    }
+
     _getCurrentLayoutBounds(): { left: number; top: number; right: number; bottom: number } {
         return { left: this._oldLeft, top: this._oldTop, right: this._oldRight, bottom: this._oldBottom }
     }
@@ -988,8 +1179,7 @@ export class View extends ProxyObject implements definition.View {
         if (!view) {
             throw new Error("Expecting a valid View instance.");
         }
-        if(!(view instanceof View))
-        {
+        if (!(view instanceof View)) {
             throw new Error(view + " is not a valid View instance.");
         }
         if (view._parent) {
@@ -1247,7 +1437,9 @@ export class View extends ProxyObject implements definition.View {
     }
 
     // TODO: Make sure the state is set to null and this is called on unloaded to clean up change listeners...
-    _onCssStateChange(previous: CssState, next: CssState): void {
+    _setCssState(next: CssState): void {
+        const previous = this._cssState;
+        this._cssState = next;
 
         if (!this._invalidateCssHandler) {
             this._invalidateCssHandler = () => {

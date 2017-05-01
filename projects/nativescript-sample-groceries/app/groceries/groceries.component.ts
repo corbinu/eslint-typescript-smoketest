@@ -8,12 +8,13 @@ import * as SocialShare from "nativescript-social-share";
 
 import { GroceryListComponent } from "./grocery-list/grocery-list.component";
 import { GroceryService } from "./shared";
-import { LoginService, alert, setHintColor } from "../shared";
+import { LoginService, alert } from "../shared";
 
 @Component({
   selector: "gr-groceries",
-  templateUrl: "groceries/groceries.component.html",
-  styleUrls: ["groceries/groceries-common.css", "groceries/groceries.component.css"],
+  moduleId: module.id,
+  templateUrl: "./groceries.component.html",
+  styleUrls: ["./groceries-common.css", "./groceries.component.css"],
   providers: [GroceryService]
 })
 export class GroceriesComponent implements OnInit {
@@ -33,17 +34,6 @@ export class GroceriesComponent implements OnInit {
     this.isAndroid = !!this.page.android;
     this.page.actionBarHidden = true;
     this.page.className = "list-page";
-  }
-
-  setTextFieldHintColor(textField) {
-    // TODO: Why is it necessary to defer this code on iOS?
-    // It should work without the setTimeout like it does on Android.
-    setTimeout(() => {
-      setHintColor({
-        view: <TextField>textField,
-        color: new Color("white")
-      });
-    });
   }
 
   // Prevent the first textfield from receiving focus on Android
@@ -88,12 +78,18 @@ export class GroceriesComponent implements OnInit {
     // user can continue to add more groceries?
     textField.dismissSoftInput();
 
+    this.showActivityIndicator();
     this.store.add(this.grocery)
-      .catch(() => {
-        alert("An error occurred while adding an item to your list.");
-      });
-
-    this.grocery = "";
+      .subscribe(
+        () => {
+          this.grocery = "";
+          this.hideActivityIndicator();
+        },
+        () => {
+          alert("An error occurred while adding an item to your list.");
+          this.hideActivityIndicator();
+        }
+      );
   }
 
   toggleRecent() {
@@ -102,12 +98,18 @@ export class GroceriesComponent implements OnInit {
       return;
     }
 
+    this.showActivityIndicator();
     this.store.restore()
-      .catch(() => {
-        alert("An error occurred while adding groceries to your list.");
-      });
-
-    this.isShowingRecent = false;
+      .subscribe(
+        () => {
+          this.isShowingRecent = false;
+          this.hideActivityIndicator();
+        },
+        () => {
+          alert("An error occurred while adding groceries to your list.");
+          this.hideActivityIndicator();
+        }
+      );
   }
 
   showMenu() {

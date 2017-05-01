@@ -1,0 +1,9 @@
+{
+	"rules": {
+		"no-empty": "off",
+		"no-extra-semi": "off", //babylon, vscode, glimmer, nativescript, angular
+		"no-cond-assign": "off", //babylon, vscode, glimmer, nativescript, angular
+		"no-mixed-spaces-and-tabs": "off" // babylon, vscode, nativescript, types
+	},
+	"extends": ["../../.main.json"]
+}

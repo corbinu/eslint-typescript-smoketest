@@ -1,0 +1,31 @@
+{
+  "name": "@glimmer/test-helpers",
+  "version": "0.21.2",
+  "main": "dist/commonjs/index.js",
+  "module": "dist/modules/index.js",
+  "jsnext:main": "dist/modules/index.js",
+  "typings": "dist/commonjs/index.d.ts",
+  "scripts": {
+    "build": "../../../build/build",
+    "prepublish": "npm run build",
+    "test": "node -e 'require(\".\")'"
+  },
+  "files": [
+    "dist"
+  ],
+  "dependencies": {
+    "@glimmer/reference": "^0.21.0",
+    "@glimmer/runtime": "^0.21.1",
+    "@glimmer/compiler": "^0.21.2",
+    "@glimmer/util": "^0.21.0",
+    "@glimmer/object": "^0.21.0",
+    "@glimmer/object-reference": "^0.21.0",
+    "@glimmer/object-model": "^0.21.0",
+    "@glimmer/wire-format": "^0.21.0",
+    "@glimmer/interfaces": "^0.21.0"
+  },
+  "devDependencies": {
+    "@types/qunit": "^2.0.31",
+    "typescript": "^2.1.4"
+  }
+}

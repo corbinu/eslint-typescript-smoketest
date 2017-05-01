@@ -8,32 +8,31 @@ import { prompt } from "ui/dialogs";
 import { Page } from "ui/page";
 import { TextField } from "ui/text-field";
 
-import { alert, setHintColor, LoginService, User } from "../shared";
+import { alert, LoginService, User } from "../shared";
 
 @Component({
   selector: "gr-login",
-  templateUrl: "login/login.component.html",
-  styleUrls: ["login/login-common.css", "login/login.component.css"],
+  moduleId: module.id,
+  templateUrl: "./login.component.html",
+  styleUrls: ["./login-common.css", "./login.component.css"],
 })
 export class LoginComponent implements OnInit {
   user: User;
   isLoggingIn = true;
   isAuthenticating = false;
 
+
   @ViewChild("initialContainer") initialContainer: ElementRef;
   @ViewChild("mainContainer") mainContainer: ElementRef;
   @ViewChild("logoContainer") logoContainer: ElementRef;
   @ViewChild("formControls") formControls: ElementRef;
   @ViewChild("signUpStack") signUpStack: ElementRef;
-  @ViewChild("email") email: ElementRef;
   @ViewChild("password") password: ElementRef;
 
   constructor(private router: Router,
     private userService: LoginService,
     private page: Page) {
     this.user = new User();
-    this.user.email = "user@nativescript.org";
-    this.user.password = "password";
   }
 
   ngOnInit() {
@@ -65,14 +64,16 @@ export class LoginComponent implements OnInit {
     }
 
     this.userService.login(this.user)
-      .then(() => {
-        this.isAuthenticating = false;
-        this.router.navigate(["/"]);
-      })
-      .catch(() => {
-        alert("Unfortunately we could not find your account.");
-        this.isAuthenticating = false;
-      });
+      .subscribe(
+        () => {
+          this.isAuthenticating = false;
+          this.router.navigate(["/"]);
+        },
+        (error) => {
+          alert("Unfortunately we could not find your account.");
+          this.isAuthenticating = false;
+        }
+      );
   }
 
   signUp() {
@@ -82,19 +83,22 @@ export class LoginComponent implements OnInit {
     }
 
     this.userService.register(this.user)
-      .then(() => {
-        alert("Your account was successfully created.");
-        this.isAuthenticating = false;
-        this.toggleDisplay();
-      })
-      .catch((message) => {
-        if (message.match(/same user/)) {
-          alert("This email address is already in use.");
-        } else {
-          alert("Unfortunately we were unable to create your account.");
+      .subscribe(
+        () => {
+          alert("Your account was successfully created.");
+          this.isAuthenticating = false;
+          this.toggleDisplay();
+        },
+        (message) => {
+          // TODO: Verify this works
+          if (message.match(/same user/)) {
+            alert("This email address is already in use.");
+          } else {
+            alert("Unfortunately we were unable to create your account.");
+          }
+          this.isAuthenticating = false;
         }
-        this.isAuthenticating = false;
-      });
+      );
   }
 
   forgotPassword() {
@@ -107,10 +111,9 @@ export class LoginComponent implements OnInit {
     }).then((data) => {
       if (data.result) {
         this.userService.resetPassword(data.text.trim())
-          .then(() => {
+          .subscribe(() => {
             alert("Your password was successfully reset. Please check your email for instructions on choosing a new password.");
-          })
-          .catch(() => {
+          }, () => {
             alert("Unfortunately, an error occurred resetting your password.");
           });
       }
@@ -119,7 +122,6 @@ export class LoginComponent implements OnInit {
 
   toggleDisplay() {
     this.isLoggingIn = !this.isLoggingIn;
-    this.setTextFieldColors();
     let mainContainer = <View>this.mainContainer.nativeElement;
     mainContainer.animate({
       backgroundColor: this.isLoggingIn ? new Color("white") : new Color("#301217"),
@@ -165,18 +167,5 @@ export class LoginComponent implements OnInit {
       // Kick off the animation queue
       new Animation(animations, false).play();
     });
-  }
-
-  setTextFieldColors() {
-    let emailTextField = <TextField>this.email.nativeElement;
-    let passwordTextField = <TextField>this.password.nativeElement;
-
-    let mainTextColor = new Color(this.isLoggingIn ? "black" : "#C4AFB4");
-    emailTextField.color = mainTextColor;
-    passwordTextField.color = mainTextColor;
-
-    let hintColor = new Color(this.isLoggingIn ? "#ACA6A7" : "#C4AFB4");
-    setHintColor({ view: emailTextField, color: hintColor });
-    setHintColor({ view: passwordTextField, color: hintColor });
   }
 }

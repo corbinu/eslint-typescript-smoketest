@@ -28,6 +28,7 @@
         /**
          * Bits that provide the actual measured size.
          */
+        export var MEASURED_HEIGHT_STATE_SHIFT: number;
         export var MEASURED_SIZE_MASK: number;
         export var MEASURED_STATE_MASK: number;
         export var MEASURED_STATE_TOO_SMALL: number;
@@ -80,6 +81,7 @@
         export function setTextTransform(view, value: string);
         export function setWhiteSpace(view, value: string);
         export function setTextDecoration(view, value: string);
+        export function getTransformedString(textTransform: string, view, stringToTransform: string): string;
 
         /**
          * Gets the native Android application instance.

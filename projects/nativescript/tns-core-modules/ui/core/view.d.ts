@@ -73,19 +73,79 @@ declare module "ui/core/view" {
      */
     export class View extends proxy.ProxyObject implements ApplyXmlAttributes {
         /**
-         * Gets or sets the corner radius of the view.
+         * Gets or sets the border color of the view.
          */
-        borderRadius: number;
+        borderColor: string | color.Color;
+        
+        /**
+         * Gets or sets the top border color of the view.
+         */
+        borderTopColor: color.Color;
+        
+        /**
+         * Gets or sets the right border color of the view.
+         */
+        borderRightColor: color.Color;
+        
+        /**
+         * Gets or sets the bottom border color of the view.
+         */
+        borderBottomColor: color.Color;
+        
+        /**
+         * Gets or sets the left border color of the view.
+         */
+        borderLeftColor: color.Color;
 
         /**
          * Gets or sets the border width of the view.
          */
-        borderWidth: number;
+        borderWidth: string | number;
 
         /**
-         * Gets or sets the border color of the view.
+         * Gets or sets the top border width of the view.
          */
-        borderColor: color.Color;
+        borderTopWidth: number;
+
+        /**
+         * Gets or sets the right border width of the view.
+         */
+        borderRightWidth: number;
+
+        /**
+         * Gets or sets the bottom border width of the view.
+         */
+        borderBottomWidth: number;
+
+        /**
+         * Gets or sets the left border width of the view.
+         */
+        borderLeftWidth: number;
+
+        /**
+         * Gets or sets the border radius of the view.
+         */
+        borderRadius: string | number;
+
+        /**
+         * Gets or sets the top left border radius of the view.
+         */
+        borderTopLeftRadius: number;
+
+        /**
+         * Gets or sets the top right border radius of the view.
+         */
+        borderTopRightRadius: number;
+
+        /**
+         * Gets or sets the bottom right border radius of the view.
+         */
+        borderBottomRightRadius: number;
+
+        /**
+         * Gets or sets the bottom left border radius of the view.
+         */
+        borderBottomLeftRadius: number;
 
         /**
          * Gets or sets the automation text of the view.
@@ -334,6 +394,8 @@ declare module "ui/core/view" {
          */
         public getMeasuredHeight(): number;
 
+        public getMeasuredState(): number;
+
         /**
          * Call this when something has changed which has invalidated the layout of this view. This will schedule a layout pass of the view tree.
          */
@@ -393,6 +455,19 @@ declare module "ui/core/view" {
         public static layoutChild(parent: View, child: View, left: number, top: number, right: number, bottom: number): void;
 
         /**
+         * Changes the width, height and margins of the child to one calculated from percentage values.
+         *
+         * @param widthMeasureSpec  Width MeasureSpec of the parent layout.
+         * @param heightMeasureSpec Height MeasureSpec of the parent layout.
+         */
+        protected static adjustChildLayoutParams(view: View, widthMeasureSpec: number, heightMeasureSpec: number): void;
+
+        /**
+         * Restores the original dimensions of the child that were changed for percentage values.
+         */
+        protected static restoreChildOriginalParams(view: View): void;
+
+        /**
          * Utility to reconcile a desired size and state, with constraints imposed
          * by a MeasureSpec.  Will take the desired size, unless a different size
          * is imposed by the constraints.  The returned value is a compound integer,
@@ -401,6 +476,8 @@ declare module "ui/core/view" {
          * size is smaller than the size the view wants to be.
          */
         public static resolveSizeAndState(size: number, specSize: number, specMode: number, childMeasuredState: number): number;
+
+        public static combineMeasuredStates(curState: number, newState): number;
 
         /**
          * Returns the child view with the specified id.
@@ -528,7 +605,7 @@ declare module "ui/core/view" {
         _domId: number;
 
         _cssState: any /* "ui/styling/style-scope" */;
-        _onCssStateChange(previous: any /* "ui/styling/style-scope" */, any /* "ui/styling/style-scope" */);
+        _setCssState(next: any /* "ui/styling/style-scope" */);
 
         _registerAnimation(animation: keyframeAnimationModule.KeyframeAnimation);
         _unregisterAnimation(animation: keyframeAnimationModule.KeyframeAnimation);
@@ -594,6 +671,21 @@ declare module "ui/core/view" {
          * Returns a new View instance.
          */
         (): View;
+    }
+
+    /**
+     * Defines an interface for Template with a key.
+     */
+    interface KeyedTemplate {
+        /**
+         * The unique key of the template.
+         */
+        key: string;
+
+        /**
+         * The function that creates the view.
+         */
+        createView: Template;
     }
 
     /**

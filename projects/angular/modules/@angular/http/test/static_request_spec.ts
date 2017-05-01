@@ -11,7 +11,7 @@ import {describe, expect, it} from '@angular/core/testing/testing_internal';
 import {RequestOptions} from '../src/base_request_options';
 import {ContentType} from '../src/enums';
 import {Headers} from '../src/headers';
-import {Request} from '../src/static_request';
+import {ArrayBuffer, Request} from '../src/static_request';
 
 export function main() {
   describe('Request', () => {
@@ -76,6 +76,17 @@ export function main() {
 
         expect(req.detectContentType()).toEqual(ContentType.BLOB);
       });
+
+      it('should not create a blob out of ArrayBuffer', () => {
+        const req = new Request(new RequestOptions({
+          url: 'test',
+          method: 'GET',
+          body: new ArrayBuffer(1),
+          headers: new Headers({'content-type': 'application/octet-stream'})
+        }));
+
+        expect(req.detectContentType()).toEqual(ContentType.ARRAY_BUFFER);
+      });
     });
 
     it('should return empty string if no body is present', () => {
@@ -85,6 +96,15 @@ export function main() {
         body: null,
         headers: new Headers({'content-type': 'application/json'})
       }));
+
+      expect(req.text()).toEqual('');
+    });
+
+    it('should return empty string if body is undefined', () => {
+      const reqOptions = new RequestOptions(
+          {url: 'test', method: 'GET', headers: new Headers({'content-type': 'application/json'})});
+      delete reqOptions.body;
+      const req = new Request(reqOptions);
 
       expect(req.text()).toEqual('');
     });

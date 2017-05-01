@@ -1,5 +1,6 @@
-import { NativeScriptModule } from "nativescript-angular/platform";
-import { NgModule } from "@angular/core";
+import { NativeScriptModule } from "nativescript-angular/nativescript.module";
+import { NgModule, NO_ERRORS_SCHEMA } from "@angular/core";
+import { NativeScriptHttpModule } from "nativescript-angular/http";
 import { NativeScriptRouterModule } from "nativescript-angular/router";
 
 import { authProviders, appRoutes } from "./app.routing";
@@ -19,6 +20,7 @@ setStatusBarColors();
   ],
   imports: [
     NativeScriptModule,
+    NativeScriptHttpModule,
     NativeScriptRouterModule,
     NativeScriptRouterModule.forRoot(appRoutes),
     LoginModule,
@@ -27,6 +29,7 @@ setStatusBarColors();
   declarations: [
       AppComponent,
   ],
-  bootstrap: [AppComponent]
+  bootstrap: [AppComponent],
+  schemas: [NO_ERRORS_SCHEMA]
 })
 export class AppModule { }

@@ -7,7 +7,7 @@
  */
 
 import {fakeAsync, tick} from '@angular/core/testing';
-import {AsyncTestCompleter, beforeEach, ddescribe, describe, iit, inject, it, xit} from '@angular/core/testing/testing_internal';
+import {AsyncTestCompleter, beforeEach, describe, inject, it} from '@angular/core/testing/testing_internal';
 import {FormControl, FormGroup, Validators} from '@angular/forms';
 
 import {EventEmitter} from '../src/facade/async';
@@ -17,10 +17,10 @@ import {FormArray} from '../src/model';
 export function main() {
   function asyncValidator(expected: string, timeouts = {}) {
     return (c: FormControl) => {
-      var resolve: (result: any) => void;
-      var promise = new Promise(res => { resolve = res; });
-      var t = isPresent((timeouts as any)[c.value]) ? (timeouts as any)[c.value] : 0;
-      var res = c.value != expected ? {'async': true} : null;
+      let resolve: (result: any) => void;
+      const promise = new Promise(res => { resolve = res; });
+      const t = isPresent((timeouts as any)[c.value]) ? (timeouts as any)[c.value] : 0;
+      const res = c.value != expected ? {'async': true} : null;
 
       if (t == 0) {
         resolve(res);
@@ -33,12 +33,14 @@ export function main() {
   }
 
   function asyncValidatorReturningObservable(c: FormControl) {
-    var e = new EventEmitter();
+    const e = new EventEmitter();
     Promise.resolve(null).then(() => { e.emit({'async': true}); });
     return e;
   }
 
   function otherAsyncValidator() { return Promise.resolve({'other': true}); }
+
+  function syncValidator(_: any /** TODO #9100 */): any /** TODO #9100 */ { return null; }
 
   describe('FormControl', () => {
     it('should default the value to null', () => {
@@ -429,6 +431,12 @@ export function main() {
         expect(c.value).toBe('initial value');
       });
 
+      it('should not set the parent when explicitly specified', () => {
+        const g = new FormGroup({'one': c});
+        c.patchValue('newValue', {onlySelf: true});
+        expect(g.value).toEqual({'one': 'initial value'});
+      });
+
       it('should reset to a specific value if passed with boxed value', () => {
         c.setValue('new value');
         expect(c.value).toBe('new value');
@@ -549,6 +557,16 @@ export function main() {
           expect(logger).toEqual(['control1', 'group']);
         });
 
+        it('should not fire an event when explicitly specified', fakeAsync(() => {
+             g.valueChanges.subscribe((value) => { throw 'Should not happen'; });
+             c.valueChanges.subscribe((value) => { throw 'Should not happen'; });
+             c2.valueChanges.subscribe((value) => { throw 'Should not happen'; });
+
+             c.reset(null, {emitEvent: false});
+
+             tick();
+           }));
+
         it('should emit one statusChange event per reset control', () => {
           g.statusChanges.subscribe(() => logger.push('group'));
           c.statusChanges.subscribe(() => logger.push('control1'));
@@ -600,9 +618,9 @@ export function main() {
          }));
 
       it('should fire an event after the status has been updated to pending', fakeAsync(() => {
-           var c = new FormControl('old', Validators.required, asyncValidator('expected'));
+           const c = new FormControl('old', Validators.required, asyncValidator('expected'));
 
-           var log: any[] /** TODO #9100 */ = [];
+           const log: any[] /** TODO #9100 */ = [];
            c.valueChanges.subscribe({next: (value: any) => log.push(`value: '${value}'`)});
 
            c.statusChanges.subscribe({next: (status: any) => log.push(`status: '${status}'`)});
@@ -959,6 +977,15 @@ export function main() {
 
           c.disable();
           expect(logger).toEqual(['control', 'group']);
+        });
+
+        it('should throw when sync validator passed into async validator param', () => {
+          const fn = () => new FormControl('', syncValidator, syncValidator);
+          // test for the specific error since without the error check it would still throw an error
+          // but
+          // not a meaningful one
+          expect(fn).toThrowError(
+              `expected the following validator to return Promise or Observable: ${syncValidator}. If you are using FormBuilder; did you forget to brace your validators in an array?`);
         });
 
       });

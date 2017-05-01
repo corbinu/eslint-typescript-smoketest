@@ -2,7 +2,7 @@
 export declare const APP_BASE_HREF: OpaqueToken;
 
 /** @stable */
-export declare class AsyncPipe implements OnDestroy {
+export declare class AsyncPipe implements OnDestroy, PipeTransform {
     constructor(_ref: ChangeDetectorRef);
     ngOnDestroy(): void;
     transform(obj: Observable<any> | Promise<any> | EventEmitter<any>): any;
@@ -74,7 +74,7 @@ export declare class Location {
     path(includeHash?: boolean): string;
     prepareExternalUrl(url: string): string;
     replaceState(path: string, query?: string): void;
-    subscribe(onNext: (value: any) => void, onThrow?: (exception: any) => void, onReturn?: () => void): Object;
+    subscribe(onNext: (value: PopStateEvent) => void, onThrow?: (exception: any) => void, onReturn?: () => void): Object;
     static joinWithSlash(start: string, end: string): string;
     static normalizeQueryParams(params: string): string;
     static stripTrailingSlash(url: string): string;
@@ -166,14 +166,15 @@ export declare class NgSwitch {
 }
 
 /** @stable */
-export declare class NgSwitchCase {
+export declare class NgSwitchCase implements DoCheck {
     ngSwitchCase: any;
     constructor(viewContainer: ViewContainerRef, templateRef: TemplateRef<Object>, ngSwitch: NgSwitch);
+    ngDoCheck(): void;
 }
 
 /** @stable */
 export declare class NgSwitchDefault {
-    constructor(viewContainer: ViewContainerRef, templateRef: TemplateRef<Object>, sswitch: NgSwitch);
+    constructor(viewContainer: ViewContainerRef, templateRef: TemplateRef<Object>, ngSwitch: NgSwitch);
 }
 
 /** @experimental */
@@ -181,7 +182,7 @@ export declare class NgTemplateOutlet implements OnChanges {
     ngOutletContext: Object;
     ngTemplateOutlet: TemplateRef<Object>;
     constructor(_viewContainerRef: ViewContainerRef);
-    ngOnChanges(): void;
+    ngOnChanges(changes: SimpleChanges): void;
 }
 
 /** @stable */
@@ -217,6 +218,13 @@ export declare abstract class PlatformLocation {
     abstract replaceState(state: any, title: string, url: string): void;
 }
 
+/** @experimental */
+export interface PopStateEvent {
+    pop?: boolean;
+    type?: string;
+    url?: string;
+}
+
 /** @stable */
 export declare class SlicePipe implements PipeTransform {
     transform(value: any, start: number, end?: number): any;
@@ -226,3 +234,6 @@ export declare class SlicePipe implements PipeTransform {
 export declare class UpperCasePipe implements PipeTransform {
     transform(value: string): string;
 }
+
+/** @stable */
+export declare const VERSION: Version;

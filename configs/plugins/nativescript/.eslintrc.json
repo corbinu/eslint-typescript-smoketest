@@ -1,0 +1,8 @@
+{
+	"rules": {
+
+		"import/newline-after-import": "off",
+		"unicorn/custom-error-definition": "off"
+	},
+	"extends": ["../../.main.json"]
+}

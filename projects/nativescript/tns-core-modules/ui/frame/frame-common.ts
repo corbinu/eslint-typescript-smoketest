@@ -1,9 +1,9 @@
 ﻿import * as definition from "ui/frame";
-import {View, CustomLayoutView} from "ui/core/view";
-import {Page} from "ui/page";
-import {isString, isFunction, isDefined} from "utils/types";
+import { View, CustomLayoutView } from "ui/core/view";
+import { Page } from "ui/page";
+import { isString, isFunction, isDefined } from "utils/types";
 import * as trace from "trace";
-import {resolveFileName} from "file-system/file-name-resolver";
+import { resolveFileName } from "file-system/file-name-resolver";
 import * as fs from "file-system";
 import * as builderModule from "ui/builder";
 import * as platform from "platform";
@@ -122,6 +122,7 @@ function pageFromBuilder(moduleNamePath: string, moduleExports: any): Page {
 
     // Possible XML file path.
     var fileName = resolveFileName(moduleNamePath, "xml");
+
     if (fileName) {
         if (trace.enabled) {
             trace.write("Loading XML file: " + fileName, trace.categories.Navigation);
@@ -135,6 +136,11 @@ function pageFromBuilder(moduleNamePath: string, moduleExports: any): Page {
             page = <Page>element;
         }
     }
+
+    // Attempts to implement https://github.com/NativeScript/NativeScript/issues/1311
+    // if (page && fileName === `${moduleNamePath}.port.xml` || fileName === `${moduleNamePath}.land.xml`){
+    //     page["isBiOrientational"] = true;
+    // }
 
     return page;
 }
@@ -210,6 +216,27 @@ export class Frame extends CustomLayoutView implements definition.Frame {
         }
     }
 
+    // Attempts to implement https://github.com/NativeScript/NativeScript/issues/1311
+    // private _subscribedToOrientationChangedEvent = false;
+    // private _onOrientationChanged(){
+    //     if (!this._currentEntry){
+    //         return;
+    //     }
+
+    //     let currentPage = this._currentEntry.resolvedPage;
+    //     let currentNavigationEntry = this._currentEntry.entry; 
+    //     if (currentPage["isBiOrientational"] && currentNavigationEntry.moduleName) {
+    //         if (this.canGoBack()){
+    //             this.goBack();
+    //         }
+    //         else {
+    //             currentNavigationEntry.backstackVisible = false;
+    //         }
+    //         // Re-navigate to the same page so the other (.port or .land) xml is loaded.
+    //         this.navigate(currentNavigationEntry);                   
+    //     }
+    // }
+
     public navigate(param: any) {
         if (trace.enabled) {
             trace.write(`NAVIGATE`, trace.categories.Navigation);
@@ -217,6 +244,16 @@ export class Frame extends CustomLayoutView implements definition.Frame {
 
         var entry = buildEntryFromArgs(param);
         var page = resolvePageFromEntry(entry);
+
+        // Attempts to implement https://github.com/NativeScript/NativeScript/issues/1311
+        // if (page["isBiOrientational"] && entry.moduleName && !this._subscribedToOrientationChangedEvent){
+        //     this._subscribedToOrientationChangedEvent = true;
+        //     let app = require("application");
+        //     if (trace.enabled) {
+        //         trace.write(`${this} subscribed to orientationChangedEvent.`, trace.categories.Navigation);
+        //     }
+        //     app.on(app.orientationChangedEvent, (data) => this._onOrientationChanged());
+        // }
 
         this._pushInFrameStack();
 
@@ -284,7 +321,7 @@ export class Frame extends CustomLayoutView implements definition.Frame {
         return !backstackHidden;
     }
 
-    public _updateActionBar(page?: Page) {
+    public _updateActionBar(page?: Page, disableNavBarAnimation?: boolean) {
         //trace.write("calling _updateActionBar on Frame", trace.categories.Navigation);
     }
 
@@ -371,7 +408,7 @@ export class Frame extends CustomLayoutView implements definition.Frame {
         if (this._currentEntry) {
             return this._currentEntry.entry;
         }
-        
+
         return null;
     }
 
@@ -527,4 +564,3 @@ export function goBack(): boolean {
 export function stack(): Array<definition.Frame> {
     return frameStack;
 }
-

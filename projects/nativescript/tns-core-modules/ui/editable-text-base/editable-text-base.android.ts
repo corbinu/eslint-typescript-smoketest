@@ -4,6 +4,9 @@ import enums = require("ui/enums");
 import utils = require("utils/utils");
 import types = require("utils/types");
 
+//https://github.com/NativeScript/NativeScript/issues/2942
+let dismissKeyboardTimeoutId: number;
+
 export class EditableTextBase extends common.EditableTextBase {
     private _android: android.widget.EditText;
     private _textWatcher: android.text.TextWatcher;
@@ -34,11 +37,11 @@ export class EditableTextBase extends common.EditableTextBase {
                 }
                 var selectionStart = owner.android.getSelectionStart();
                 owner.android.removeTextChangedListener(owner._textWatcher);
-                
+
                 //RemoveThisDoubleCall
                 owner.style._updateTextDecoration();
                 owner.style._updateTextTransform();
-                
+
                 owner.android.addTextChangedListener(owner._textWatcher);
                 owner.android.setSelection(selectionStart);
             },
@@ -69,13 +72,26 @@ export class EditableTextBase extends common.EditableTextBase {
                     return;
                 }
 
-                if (!hasFocus) {
+                if (hasFocus) {
+                    if (dismissKeyboardTimeoutId){
+                        // https://github.com/NativeScript/NativeScript/issues/2942
+                        // Don't hide the keyboard since another (or the same) EditText has gained focus.
+                        clearTimeout(dismissKeyboardTimeoutId);
+                        dismissKeyboardTimeoutId = undefined;
+                    }
+                }
+                else {
                     if (owner._dirtyTextAccumulator) {
                         owner._onPropertyChangedFromNative(EditableTextBase.textProperty, owner._dirtyTextAccumulator);
                         owner._dirtyTextAccumulator = undefined;
                     }
 
-                    owner.dismissSoftInput();
+                    dismissKeyboardTimeoutId = setTimeout(() => {
+                        // https://github.com/NativeScript/NativeScript/issues/2942
+                        // Dismiss the keyboard if focus goes to something different from EditText.
+                        owner.dismissSoftInput();
+                        dismissKeyboardTimeoutId = null;
+                    }, 1);
                 }
             }
         });
@@ -89,10 +105,18 @@ export class EditableTextBase extends common.EditableTextBase {
                         actionId === android.view.inputmethod.EditorInfo.IME_ACTION_GO ||
                         actionId === android.view.inputmethod.EditorInfo.IME_ACTION_SEARCH ||
                         actionId === android.view.inputmethod.EditorInfo.IME_ACTION_SEND ||
-                        actionId === android.view.inputmethod.EditorInfo.IME_ACTION_NEXT ||
                         (event && event.getKeyCode() === android.view.KeyEvent.KEYCODE_ENTER)) {
-                        owner.dismissSoftInput();
+
+                        // If it is TextField, close the keyboard. If it is TextView, do not close it since the TextView is multiline
+                        // https://github.com/NativeScript/NativeScript/issues/3111
+                        if (textView.getMaxLines() === 1){
+                            owner.dismissSoftInput();
+                        }
                         owner._onReturnPress();
+                    }
+                    // If action is ACTION_NEXT then do not close keyboard
+                    if (actionId === android.view.inputmethod.EditorInfo.IME_ACTION_NEXT) {
+                      owner._onReturnPress();
                     }
                 }
 
@@ -292,4 +316,4 @@ export class EditableTextBase extends common.EditableTextBase {
             this.android.setKeyListener(null);
         }
     }
-}  
+}

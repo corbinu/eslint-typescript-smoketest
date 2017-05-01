@@ -85,13 +85,18 @@ module.exports = function(_options) {
   /*
    * ES6 Build
    */
-  var tokenizerPath = path.join(require.resolve('simple-html-tokenizer'), '..', '..', 'lib');
+  var tokenizerPath = path.join(require.resolve('simple-html-tokenizer'), '..', '..', 'src');
   // TODO: WAT, why does { } change the output so much....
-  var HTMLTokenizer = find(tokenizerPath, { });
+  var tokenizerTree = find(tokenizerPath, { });
+  var HTMLTokenizer = mv(tokenizerTree, "simple-html-tokenizer");
 
   var tsTree = find(packages, {
     include: ['**/*.ts'],
-    exclude: ['**/*.d.ts']
+    exclude: [
+      '**/*.d.ts',
+      '*/node_modules/**',
+      '@glimmer/*/node_modules/**'
+    ]
   });
 
   var tsLintTree = new TSLint(tsTree, {
@@ -103,7 +108,7 @@ module.exports = function(_options) {
   var jsTree = typescript(tsTree, tsOptions);
 
   var libTree = find(jsTree, {
-    include: ['*/index.js', '*/lib/**/*.js']
+    include: ['*/index.js', '@glimmer/*/index.js', '@glimmer/*/lib/**/*.js']
   });
 
   libTree = merge([libTree, HTMLTokenizer, handlebarsInlinedTrees.compiler]);
@@ -148,24 +153,26 @@ module.exports = function(_options) {
   var glimmerCommon = find(libTree, {
     include: [
       'glimmer/**/*.js',
-      'glimmer-object/**/*.js',
-      'glimmer-object-reference/**/*.js',
-      'glimmer-reference/**/*.js',
-      'glimmer-util/**/*.js',
-      'glimmer-wire-format/**/*.js'
+      '@glimmer/object/**/*.js',
+      '@glimmer/object-model/**/*.js',
+      '@glimmer/object-reference/**/*.js',
+      '@glimmer/reference/**/*.js',
+      '@glimmer/util/**/*.js',
+      '@glimmer/wire-format/**/*.js'
     ]
   });
 
   var glimmerRuntime = find(libTree, {
-    include: ['glimmer-runtime/**/*']
+    include: ['@glimmer/runtime/**/*', '@glimmer/public-runtime/**/*']
   });
 
   var glimmerCompiler = merge([
     find(libTree, {
       include: [
-        'glimmer-syntax/**/*.js',
-        'glimmer-compiler/**/*.js',
+        '@glimmer/syntax/**/*.js',
+        '@glimmer/compiler/**/*.js',
         'simple-html-tokenizer/**/*.js',
+        'handlebars.js',
         'handlebars/**/*.js'
       ]
     })
@@ -174,7 +181,7 @@ module.exports = function(_options) {
   var glimmerDemos = merge([
     find(libTree, {
       include: [
-        'glimmer-test-helpers/**/*.js',
+        '@glimmer/test-helpers/**/*.js',
         'glimmer-demos/**/*.js',
       ]
     })
@@ -183,7 +190,7 @@ module.exports = function(_options) {
   var glimmerBenchmarks = merge([
     find(libTree, {
       include: [
-        'glimmer-test-helpers/**/*.js',
+        '@glimmer/test-helpers/**/*.js',
         'glimmer-benchmarks/**/*.js',
       ]
     })
@@ -191,8 +198,8 @@ module.exports = function(_options) {
 
   var glimmerTests = merge([
     transpiledTSLintTree,
-    find(jsTree, { include: ['*/tests/**/*.js'], exclude: ['glimmer-node/tests/**/*.js'] }),
-    find(jsTree, { include: ['glimmer-test-helpers/**/*.js'] })
+    find(jsTree, { include: ['*/tests/**/*.js', '@glimmer/*/tests/**/*.js'], exclude: ['@glimmer/node/tests/**/*.js'] }),
+    find(jsTree, { include: ['@glimmer/test-helpers/**/*.js'] })
   ]);
 
   glimmerTests = transpile(glimmerTests, babelOptions, 'glimmer-tests');

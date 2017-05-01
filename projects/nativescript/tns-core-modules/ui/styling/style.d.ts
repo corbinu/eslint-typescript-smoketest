@@ -13,6 +13,13 @@ declare module "ui/styling/style" {
         bottom: number;
     }
 
+    export interface BorderColor {
+        top: Color;
+        right: Color;
+        bottom: Color;
+        left: Color;
+    }
+
     export interface CommonLayoutParams {
         width: number;
         height: number;
@@ -41,6 +48,7 @@ declare module "ui/styling/style" {
         public scaleX: number;
         public scaleY: number;
         public color: Color;
+        public tintColor: Color;
         public placeholderColor: Color;
         public backgroundColor: Color;
         public backgroundImage: string;
@@ -48,9 +56,21 @@ declare module "ui/styling/style" {
         public backgroundSize: string;
         public backgroundPosition: string;
         public backgroundRepeat: string;
-        public borderColor: Color;
-        public borderWidth: number;
-        public borderRadius: number;
+        public borderColor: string | Color;
+        public borderTopColor: Color;
+        public borderRightColor: Color;
+        public borderBottomColor: Color;
+        public borderLeftColor: Color;
+        public borderWidth: string | number;
+        public borderTopWidth: number;
+        public borderRightWidth: number;
+        public borderBottomWidth: number;
+        public borderLeftWidth: number;
+        public borderRadius: string | number;
+        public borderTopLeftRadius: number;
+        public borderTopRightRadius: number;
+        public borderBottomRightRadius: number;
+        public borderBottomLeftRadius: number;
         public fontSize: number;
         public fontFamily: string;
         public fontStyle: string;
@@ -81,6 +101,22 @@ declare module "ui/styling/style" {
         public whiteSpace: string;
         public letterSpacing: number;
         public zIndex: number;
+        
+        // TabView-specific props
+        public tabTextColor: Color;
+        public tabBackgroundColor: Color;
+        public selectedTabTextColor: Color;
+        public androidSelectedTabHighlightColor: Color;
+
+        // ListView-specific props
+        public separatorColor : Color;
+
+        //SegmentedBar-specific props
+        public selectedBackgroundColor: Color;
+
+        // Page-specific props
+        public statusBarStyle: string;
+        public androidStatusBarBackground: Color;
 
         constructor(parentView: View);
 
@@ -105,15 +141,29 @@ declare module "ui/styling/style" {
     export var scaleXProperty: styleProperty.Property;
     export var scaleYProperty: styleProperty.Property;
     export var colorProperty: styleProperty.Property;
+    export var tintColorProperty: styleProperty.Property;
     export var placeholderColorProperty: styleProperty.Property;
     export var backgroundImageProperty: styleProperty.Property;
     export var backgroundColorProperty: styleProperty.Property;
     export var backgroundRepeatProperty: styleProperty.Property;
     export var backgroundSizeProperty: styleProperty.Property;
     export var backgroundPositionProperty: styleProperty.Property;
-    export var borderColorProperty: styleProperty.Property;
-    export var borderWidthProperty: styleProperty.Property;
-    export var borderRadiusProperty: styleProperty.Property;
+    
+    export var borderTopColorProperty: styleProperty.Property;
+    export var borderRightColorProperty: styleProperty.Property;
+    export var borderBottomColorProperty: styleProperty.Property;
+    export var borderLeftColorProperty: styleProperty.Property;
+    
+    export var borderTopWidthProperty: styleProperty.Property;
+    export var borderRightWidthProperty: styleProperty.Property;
+    export var borderBottomWidthProperty: styleProperty.Property;
+    export var borderLeftWidthProperty: styleProperty.Property;
+    
+    export var borderTopLeftRadiusProperty: styleProperty.Property;
+    export var borderTopRightRadiusProperty: styleProperty.Property;
+    export var borderBottomRightRadiusProperty: styleProperty.Property;
+    export var borderBottomLeftRadiusProperty: styleProperty.Property;
+    
     export var clipPathProperty: styleProperty.Property;
     export var backgroundInternalProperty: styleProperty.Property;
     export var fontSizeProperty: styleProperty.Property;
@@ -131,6 +181,18 @@ declare module "ui/styling/style" {
     export var whiteSpaceProperty: styleProperty.Property;
     export var letterSpacingProperty: styleProperty.Property;
     export var zIndexProperty: styleProperty.Property;
+
+    export var tabTextColorProperty: styleProperty.Property;
+    export var tabBackgroundColorProperty: styleProperty.Property;
+    export var selectedTabTextColorProperty: styleProperty.Property;
+    export var androidSelectedTabHighlightColorProperty: styleProperty.Property;
+
+    export var selectedBackgroundColorProperty: styleProperty.Property;
+
+    export var statusBarStyleProperty: styleProperty.Property;
+    export var androidStatusBarBackgroundProperty: styleProperty.Property;
+
+    export var separatorColorProperty: styleProperty.Property;
 
     // Helper property holding most layout related properties available in CSS.
     // When layout related properties are set in CSS we chache them and send them to the native view in a single call.

@@ -113,7 +113,10 @@ module.exports = function(grunt) {
             "!**/*.ios.d.ts",
             "!tns-core-modules.d.ts",
             "!tns-core-modules.es6.d.ts",
-            "!tns-core-modules.base.d.ts"
+            "!tns-core-modules.es2016.d.ts",
+            "!tns-core-modules.base.d.ts",
+            "!references.d.ts",
+            "!webworker.es2016.d.ts"
         ].concat(localCfg.defaultExcludes).concat(es6Excludes).concat(angularExcludes));
         dtsFiles.sort();
 
@@ -167,11 +170,11 @@ module.exports = function(grunt) {
     ];
     localCfg.defaultExcludes = localCfg.typeScriptSrc.filter(function(item) { return /^!/.test(item); });
     localCfg.typeScriptSrcForTsLint = localCfg.typeScriptSrc.concat([
-        "!tns-core-modules/ios/**/*",
-        "!tns-core-modules/android17.d.ts",
         "!tns-core-modules/libjs.d.ts",
         "!tns-core-modules/lib.core.es6.d.ts",
-        "!tns-core-modules/lib.dom.d.ts"
+        "!tns-core-modules/lib.dom.d.ts",
+        "!tns-core-modules.es2016.d.ts",
+        "!tns-platform-declarations/**/*"
     ]);
     localCfg.srcTsdFiles = [
         "tns-core-modules/**/*.d.ts",
@@ -264,7 +267,7 @@ module.exports = function(grunt) {
                     "!android17.d.ts",
                     "!**/*.android.d.ts",
                     "!ios.d.ts",
-                    "!**/*.ios.d.ts",
+                    "!**/*.ios.d.ts"
                 ].concat(localCfg.defaultExcludes),
                 dest: localCfg.outDir + "/",
                 expand: true,
@@ -352,6 +355,8 @@ module.exports = function(grunt) {
                     '!**/node_modules/**/*',
                     '!**/platforms/**/*',
                     '!bin/**/*',
+                    '!**/references.d.ts',
+                    '!tns-core-modules/references.d.ts',
                     '!tns-core-modules/android17.d.ts',
                     '!tns-core-modules/ios/**/*',
                     '!tns-core-modules/org.nativescript.widgets.d.ts',
@@ -416,9 +421,10 @@ module.exports = function(grunt) {
                     "name": 'NativeScript',
                     "includeDeclarations": undefined,
                     "experimentalDecorators": undefined,
-                    "mode": "file"
+                    "mode": "file",
+                    "tsconfig": "tsconfig.typedoc.json"
                 },
-                src: localCfg.srcTsdFiles
+                src: "tns-core-modules/tns-core-modules.d.ts"
             }
         }
     });
@@ -448,7 +454,8 @@ module.exports = function(grunt) {
 
     function validatePackageJsons(fileValidator, errorFormatter) {
         var packageDescriptors = grunt.file.expand({}, [
-            'tns-core-modules/**/package.json'
+            'tns-core-modules/**/package.json',
+            '!tns-core-modules/node_modules/**/*'
         ]);
         var errors = packageDescriptors.map(function(packagePath) {
             if (fileValidator(packagePath)) {

@@ -138,6 +138,7 @@ export module IOSActionItemPosition {
 export module ImageFormat {
     export var png: string = "png";
     export var jpeg: string = "jpeg";
+    export var jpg: string = "jpg";
 }
 
 export module FontStyle {
@@ -177,4 +178,9 @@ export module AnimationCurve {
         animationModule = animationModule || require("ui/animation");
         return new animationModule.CubicBezierAnimationCurve(x1, y1 ,x2, y2);
     }
+}
+
+export module StatusBarStyle {
+    export var light = "light";
+    export var dark = "dark";
 }

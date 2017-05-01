@@ -1,0 +1,6 @@
+{
+	"rules": {
+		"no-mixed-spaces-and-tabs": "off" // vscode, nativescript, types
+	},
+	"extends": ["../../.main.json"]
+}

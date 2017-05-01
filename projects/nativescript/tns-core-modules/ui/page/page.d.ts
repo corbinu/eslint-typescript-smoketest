@@ -5,6 +5,7 @@ declare module "ui/page" {
     import observable = require("data/observable");
     import contentView = require("ui/content-view");
     import frame = require("ui/frame");
+    import color = require("color");
     import actionBar = require("ui/action-bar");
     import dependencyObservable = require("ui/core/dependency-observable");
     import keyframeAnimation = require("ui/animation/keyframe-animation");
@@ -52,14 +53,30 @@ declare module "ui/page" {
      */
     export class Page extends contentView.ContentView {
         /**
-         * Dependency property that specify if page background should span under status bar.
+         * Dependency property that specifies if page background should span under status bar.
          */
         public static backgroundSpanUnderStatusBarProperty: dependencyObservable.Property;
+
+        /**
+        * Dependency property that specifies the style of the status bar.
+        */
+        public static statusBarStyleProperty: dependencyObservable.Property;
+
+        /**
+        * Dependency property that specifies the background of the status bar in Android.
+        */
+        public static androidStatusBarBackgroundProperty: dependencyObservable.Property;
 
         /**
          * Dependency property used to hide the Navigation Bar in iOS and the Action Bar in Android.
          */
         public static actionBarHiddenProperty: dependencyObservable.Property;
+
+        /**
+         * Dependency property used to control if swipe back navigation in iOS is enabled.
+         * This property is iOS sepecific. Default value: true
+         */
+        public static enableSwipeBackNavigationProperty: dependencyObservable.Property;
 
         /**
          * String value used when hooking to showingModally event.
@@ -97,9 +114,24 @@ declare module "ui/page" {
         backgroundSpanUnderStatusBar: boolean;
 
         /**
+         * Gets or sets the style of the status bar.
+         */
+        statusBarStyle: string;
+
+        /**
+         * Gets or sets the color of the status bar in Android.
+         */
+        androidStatusBarBackground: color.Color;
+
+        /**
          * Used to hide the Navigation Bar in iOS and the Action Bar in Android.
          */
         actionBarHidden: boolean;
+
+        /**
+         * Used to control if swipe back navigation in iOS is enabled. This property is iOS sepecific. Default value: true
+         */
+        enableSwipeBackNavigation: boolean;
 
         /**
          * A valid css string which will be applied for all nested UI components (based on css rules).

@@ -4,17 +4,16 @@ import cssSelector = require("ui/styling/css-selector");
 import cssParser = require("css");
 import application = require("application");
 import * as typesModule from "utils/types";
-import * as utilsModule from "utils/utils";
 import * as fileSystemModule from "file-system";
 
 import keyframeAnimation = require("ui/animation/keyframe-animation");
 import cssAnimationParser = require("./css-animation-parser");
 import observable = require("ui/core/dependency-observable");
 
-import {convertString} from "utils/utils";
-import {RuleSet, Node, SelectorsMap, SelectorCore, SelectorsMatch, ChangeMap } from "ui/styling/css-selector";
-import {StyleProperty, withStyleProperty} from "ui/styling/style-property";
-import {getSpecialPropertySetter} from "ui/builder/special-properties";
+import { convertString } from "utils/utils";
+import { RuleSet, Node, SelectorsMap, SelectorCore, SelectorsMatch, ChangeMap } from "ui/styling/css-selector";
+import { StyleProperty, withStyleProperty } from "ui/styling/style-property";
+import { getSpecialPropertySetter } from "ui/builder/special-properties";
 
 const animationsSymbol: symbol = Symbol("animations");
 
@@ -22,13 +21,6 @@ var types: typeof typesModule;
 function ensureTypes() {
     if (!types) {
         types = require("utils/types");
-    }
-}
-
-var utils: typeof utilsModule;
-function ensureUtils() {
-    if (!utils) {
-        utils = require("utils/utils");
     }
 }
 
@@ -144,22 +136,16 @@ export class StyleScope {
                 let url = match && match[2];
 
                 if (!types.isNullOrUndefined(url)) {
-                    ensureUtils();
+                    ensureFS();
 
-                    if (utils.isFileOrResourcePath(url)) {
-                        ensureFS();
+                    let appDirectory = fs.knownFolders.currentApp().path;
+                    let fileName = resolveFileNameFromUrl(url, appDirectory, fs.File.exists);
 
-                        let fileName = types.isString(url) ? url.trim() : "";
-                        if (fileName.indexOf("~/") === 0) {
-                            fileName = fs.path.join(fs.knownFolders.currentApp().path, fileName.replace("~/", ""));
-                        }
-
-                        if (fs.File.exists(fileName)) {
-                            let file = fs.File.fromPath(fileName);
-                            let text = file.readTextSync();
-                            if (text) {
-                                selectors = selectors.concat(StyleScope.createSelectorsFromCss(text, fileName, keyframes));
-                            }
+                    if (fileName !== null) {
+                        let file: fileSystemModule.File = fs.File.fromPath(fileName);
+                        let text = file.readTextSync();
+                        if (text) {
+                            selectors = selectors.concat(StyleScope.createSelectorsFromCss(text, fileName, keyframes));
                         }
                     }
                 }
@@ -197,14 +183,12 @@ export class StyleScope {
     }
 
     public applySelectors(view: view.View): void {
-        this.ensureSelectors(); 
+        this.ensureSelectors();
 
         let state = this._selectors.query(view);
 
-        let previousState = view._cssState;
         let nextState = new CssState(view, state);
-        view._cssState = nextState;
-        view._onCssStateChange(previousState, nextState);
+        view._setCssState(nextState);
     }
 
     public query(node: Node): SelectorCore[] {
@@ -245,6 +229,26 @@ export class StyleScope {
     public getAnimations(ruleset: RuleSet): keyframeAnimation.KeyframeAnimationInfo[] {
         return ruleset[animationsSymbol];
     }
+}
+
+export function resolveFileNameFromUrl(url: string, appDirectory: string, fileExists: (string) => boolean): string {
+    let fileName: string = types.isString(url) ? url.trim() : "";
+
+    if (fileName.indexOf("~/") === 0) {
+        fileName = fileName.replace("~/", "");
+    }
+
+    let local = fs.path.join(appDirectory, fileName);
+    if (fileExists(local)) {
+        return local;
+    }
+
+    let external = fs.path.join(appDirectory, "tns_modules", fileName);
+    if (fileExists(external)) {
+        return external;
+    }
+
+    return null;
 }
 
 export function applyInlineSyle(view: view.View, style: string) {

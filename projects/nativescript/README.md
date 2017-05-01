@@ -29,11 +29,14 @@ Our Getting Started Guides are hands-on tutorials that walk you through installi
 ## Quick Links
 
 - [NativeScript home page](http://nativescript.org)
+- [NativeScript Code Samples](http://docs.nativescript.org/angular/code-samples/overview)
+- [Install NativeScript Demo mobile app](https://www.nativescript.org/nativescript-example-application)
 - [NativeScript and Angular](http://docs.nativescript.org/angular/tutorial/ng-chapter-0)
 - [@NativeScript on Twitter](http://twitter.com/NativeScript)
 - [NativeScript community Slack channel](http://developer.telerik.com/wp-login.php?action=slack-invitation)
 - [NativeScript on Stack Overflow](http://stackoverflow.com/questions/tagged/nativescript)
 - [NativeScript documentation](http://docs.nativescript.org/)
+
 - [NativeScript blog](http://www.nativescript.org/blog)
 
 ## Repositories
@@ -66,3 +69,13 @@ We love PRs, and accept them for all of our repositories—even docs! Please fol
 We are [working together with the Google Angular JS team](http://angularjs.blogspot.com/2015/12/building-mobile-apps-with-angular-2-and.html) to make Angular 2.0 work on top of NativeScript. [To use Angular 2 and NativeScript please follow the getting started article](http://docs.nativescript.org/angular/tutorial/ng-chapter-0).
 
 ![](https://ga-beacon.appspot.com/UA-111455-24/nativescript/nativescript?pixel) 
+
+## Get Help
+
+The NativeScript framework has a vibrant community that can help when you run into problems.
+
+If you have a question, start by seeing if anyone else has encountered the scenario on [Stack Overflow](http://stackoverflow.com/questions/tagged/nativescript). If you cannot find any information, try [asking the question yourself](http://stackoverflow.com/questions/ask/advice?). Make sure to add any details needed to recreate the issue and include the “NativeScript” tag, so your question is visible to the NativeScript community.
+
+If you need more help than the Q&A format Stack Overflow can provide, try [joining the NativeScript community Slack](http://developer.telerik.com/wp-login.php?action=slack-invitation). The Slack chat is a great place to get help troubleshooting problems, as well as connect with other NativeScript developers.
+
+Finally, if you have found an issue with the NativeScript framework itself, please report the problem in the   [Issues](https://github.com/NativeScript/NativeScript/issues).

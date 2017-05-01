@@ -1,0 +1,147 @@
+{
+	"parserOptions": {
+		"sourceType": "module"
+	},
+	"parser": "typescript-eslint-parser",
+	"plugins": [
+		"typescript",
+		"import",
+		"promise",
+		"lodash",
+		"node",
+		"unicorn",
+		"mysticatea"
+	],
+	"env": {
+		"node": true,
+		"es6": true
+	},
+	"rules": {
+		"node/no-unsupported-features": "off", // Blows up all
+
+		"import/unambiguous": "warn", // Issues with with definitons and files that include modules
+		"promise/prefer-await-to-callbacks": "warn", // Fix don't error on definitons
+		"mysticatea/block-scoped-var": "warn", // Fix if two definitons in a modules in a file with the same var this will error
+		"import/no-unresolved": "warn",
+		"import/named": "warn",
+		"import/default": "warn",
+		"import/namespace": "warn",
+		"import/no-absolute-path": "warn",
+		"import/no-dynamic-require": "warn",
+		"import/no-internal-modules": "warn",
+		"import/export": "warn",
+		"import/no-named-as-default": "warn",
+		"import/no-named-as-default-member": "warn",
+		"import/no-deprecated": "warn",
+		"import/no-extraneous-dependencies": "warn",
+		"import/no-mutable-exports": "warn",
+		"import/no-commonjs": "warn",
+		"import/no-amd": "warn",
+		"import/no-nodejs-modules": "warn",
+		"import/first": "warn",
+		"import/no-duplicates": "warn",
+		"import/extensions": [
+			"warn",
+			"never",
+			{
+				"svg": "always",
+				"json": "always"
+			}
+		],
+		"import/order": [
+			"warn",
+			{
+				"newlines-between": "always"
+			}
+		],
+		"import/prefer-default-export": "warn",
+		"import/max-dependencies": "warn",
+		"import/no-unassigned-import": "warn",
+		"import/no-named-default": "warn",
+		"promise/catch-or-return": "warn",
+		"promise/no-return-wrap": "warn",
+		"promise/param-names": "warn",
+		"promise/always-return": "warn",
+		"promise/no-nesting": "warn",
+		"promise/no-promise-in-callback": "warn",
+		"promise/no-callback-in-promise": "warn",
+		"promise/avoid-new": "warn",
+		"promise/prefer-await-to-then": "warn",
+		"lodash/callback-binding": "warn",
+        "lodash/chain-style": ["warn", "as-needed"],
+        "lodash/chaining": "warn",
+        "lodash/collection-method-value": "warn",
+        "lodash/collection-return": "warn",
+        "lodash/consistent-compose": ["warn", "flow"],
+        "lodash/identity-shorthand": ["warn", "always"],
+        "lodash/import-scope": [2],
+        "lodash/matches-prop-shorthand": ["warn", "always"],
+        "lodash/matches-shorthand": ["warn", "always", 3],
+        "lodash/no-commit": "warn",
+        "lodash/no-double-unwrap": "warn",
+        "lodash/no-extra-args": "warn",
+        "lodash/no-unbound-this": "warn",
+        "lodash/path-style": ["warn", "string"],
+        "lodash/prefer-compact": "warn",
+        "lodash/prefer-constant": "warn",
+        "lodash/prefer-filter": ["warn", 3],
+        "lodash/prefer-flat-map": "warn",
+        "lodash/prefer-get": ["warn", 3],
+        "lodash/prefer-includes": ["warn", {"includeNative": true}],
+        "lodash/prefer-invoke-map": "warn",
+        "lodash/prefer-is-nil": "warn",
+        "lodash/prefer-lodash-chain": "warn",
+        "lodash/prefer-lodash-method": "warn",
+        "lodash/prefer-lodash-typecheck": "warn",
+        "lodash/prefer-map": "warn",
+        "lodash/prefer-matches": ["warn", 3],
+        "lodash/prefer-noop": "warn",
+        "lodash/prefer-over-quantifier": "warn",
+        "lodash/prefer-reject": ["warn", 3],
+        "lodash/prefer-startswith": "warn",
+        "lodash/prefer-thru": "warn",
+        "lodash/prefer-times": "warn",
+        "lodash/prefer-wrapper-method": "warn",
+        "lodash/preferred-alias": "warn",
+        "lodash/prop-shorthand": ["warn", "always"],
+        "lodash/unwrap": "warn",
+		"node/exports-style": "warn",
+		"node/no-deprecated-api": "warn",
+		"node/no-missing-import": "warn",
+		"node/no-missing-require": "warn",
+		"node/no-unpublished-bin": "warn",
+		"node/no-unpublished-import": "warn",
+		"node/no-unpublished-require": "warn",
+		"node/process-exit-as-throw": "warn",
+		"node/shebang": "warn",
+		"unicorn/catch-error-name": ["warn", {"name": "err"}],
+		"unicorn/explicit-length-check": "warn",
+		"unicorn/filename-case": ["warn", {"case": "kebabCase"}],
+		"unicorn/no-abusive-eslint-disable": "warn",
+		"unicorn/custom-error-definition": "warn", 
+		"unicorn/no-process-exit": "warn",
+		"unicorn/throw-new-error": "warn",
+		"unicorn/number-literal-case": "warn",
+		"unicorn/escape-case": "warn",
+		"unicorn/no-array-instanceof": "warn",
+		"unicorn/no-new-buffer": "warn",
+		"unicorn/no-hex-escape": "warn",
+		"unicorn/prefer-starts-ends-with": "warn",
+		"unicorn/prefer-type-error": "warn",
+		"mysticatea/arrow-parens": "warn",
+        "mysticatea/no-instanceof-array": "warn",
+        "mysticatea/no-instanceof-wrapper": "warn",
+        "mysticatea/no-literal-call": "warn",
+        "mysticatea/no-this-in-static": "warn",
+        "mysticatea/no-use-ignored-vars": "warn",
+        "mysticatea/no-useless-rest-spread": "warn"
+	},
+	"settings": {
+		"import/parsers": {
+			"typescript-eslint-parser": [
+				".ts",
+				".tsx"
+			]
+		}
+	}
+}

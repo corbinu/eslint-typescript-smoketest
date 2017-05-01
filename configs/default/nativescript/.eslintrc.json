@@ -1,0 +1,15 @@
+{
+	"rules": {
+		"no-console": "off",
+		"no-empty": "off",
+		"no-extra-semi": "off", //babylon, vscode, glimmer, nativescript, angular
+		"no-cond-assign": "off", //babylon, vscode, glimmer, nativescript, angular
+		"no-mixed-spaces-and-tabs": "off", // vscode, nativescript, types
+		"no-case-declarations": "off", //glimmer, nativescript, angular
+		"no-fallthrough": "off", //glimmer, nativescript
+		"no-constant-condition": "off", //nativescript
+		"no-extra-boolean-cast": "off", //nativescript
+		"no-irregular-whitespace": "off" //nativescript
+	},
+	"extends": ["../../.main.json"]
+}

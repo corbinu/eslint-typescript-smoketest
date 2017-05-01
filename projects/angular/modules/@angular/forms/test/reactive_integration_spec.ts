@@ -13,8 +13,6 @@ import {By} from '@angular/platform-browser/src/dom/debug/by';
 import {getDOM} from '@angular/platform-browser/src/dom/dom_adapter';
 import {dispatchEvent} from '@angular/platform-browser/testing/browser_util';
 
-import {ListWrapper} from '../src/facade/collection';
-
 export function main() {
   describe('reactive forms integration tests', () => {
 
@@ -22,11 +20,27 @@ export function main() {
       TestBed.configureTestingModule({
         imports: [FormsModule, ReactiveFormsModule],
         declarations: [
-          FormControlComp, FormGroupComp, FormArrayComp, FormArrayNestedGroup,
-          FormControlNameSelect, FormControlNumberInput, FormControlRadioButtons, WrappedValue,
-          WrappedValueForm, MyInput, MyInputForm, FormGroupNgModel, FormControlNgModel,
-          LoginIsEmptyValidator, LoginIsEmptyWrapper, ValidationBindingsForm, UniqLoginValidator,
-          UniqLoginWrapper, NestedFormGroupComp
+          FormControlComp,
+          FormGroupComp,
+          FormArrayComp,
+          FormArrayNestedGroup,
+          FormControlNameSelect,
+          FormControlNumberInput,
+          FormControlRangeInput,
+          FormControlRadioButtons,
+          WrappedValue,
+          WrappedValueForm,
+          MyInput,
+          MyInputForm,
+          FormGroupNgModel,
+          FormControlNgModel,
+          LoginIsEmptyValidator,
+          LoginIsEmptyWrapper,
+          ValidationBindingsForm,
+          UniqLoginValidator,
+          UniqLoginWrapper,
+          NestedFormGroupComp,
+          FormControlCheckboxRequiredValidator,
         ]
       });
     });
@@ -529,17 +543,17 @@ export function main() {
     });
 
     describe('submit and reset events', () => {
-      it('should emit ngSubmit event on submit', () => {
+      it('should emit ngSubmit event with the original submit event on submit', () => {
         const fixture = TestBed.createComponent(FormGroupComp);
         fixture.componentInstance.form = new FormGroup({'login': new FormControl('loginValue')});
-        fixture.componentInstance.data = 'should be changed';
+        fixture.componentInstance.event = null;
         fixture.detectChanges();
 
         const formEl = fixture.debugElement.query(By.css('form')).nativeElement;
         dispatchEvent(formEl, 'submit');
 
         fixture.detectChanges();
-        expect(fixture.componentInstance.data).toEqual('submitted');
+        expect(fixture.componentInstance.event.type).toEqual('submit');
       });
 
       it('should mark formGroup as submitted on submit event', () => {
@@ -645,6 +659,60 @@ export function main() {
 
         expect(sortedClassList(input)).toEqual(['ng-dirty', 'ng-touched', 'ng-valid']);
       });
+
+      it('should work with single fields and async validators', fakeAsync(() => {
+           const fixture = TestBed.createComponent(FormControlComp);
+           const control = new FormControl('', null, uniqLoginAsyncValidator('good'));
+           fixture.debugElement.componentInstance.control = control;
+           fixture.detectChanges();
+
+           const input = fixture.debugElement.query(By.css('input')).nativeElement;
+           expect(sortedClassList(input)).toEqual(['ng-pending', 'ng-pristine', 'ng-untouched']);
+
+           dispatchEvent(input, 'blur');
+           fixture.detectChanges();
+           expect(sortedClassList(input)).toEqual(['ng-pending', 'ng-pristine', 'ng-touched']);
+
+           input.value = 'good';
+           dispatchEvent(input, 'input');
+           tick();
+           fixture.detectChanges();
+
+           expect(sortedClassList(input)).toEqual(['ng-dirty', 'ng-touched', 'ng-valid']);
+         }));
+
+      it('should work with single fields that combines async and sync validators', fakeAsync(() => {
+           const fixture = TestBed.createComponent(FormControlComp);
+           const control =
+               new FormControl('', Validators.required, uniqLoginAsyncValidator('good'));
+           fixture.debugElement.componentInstance.control = control;
+           fixture.detectChanges();
+
+           const input = fixture.debugElement.query(By.css('input')).nativeElement;
+           expect(sortedClassList(input)).toEqual(['ng-invalid', 'ng-pristine', 'ng-untouched']);
+
+           dispatchEvent(input, 'blur');
+           fixture.detectChanges();
+           expect(sortedClassList(input)).toEqual(['ng-invalid', 'ng-pristine', 'ng-touched']);
+
+           input.value = 'bad';
+           dispatchEvent(input, 'input');
+           fixture.detectChanges();
+
+           expect(sortedClassList(input)).toEqual(['ng-dirty', 'ng-pending', 'ng-touched']);
+
+           tick();
+           fixture.detectChanges();
+
+           expect(sortedClassList(input)).toEqual(['ng-dirty', 'ng-invalid', 'ng-touched']);
+
+           input.value = 'good';
+           dispatchEvent(input, 'input');
+           tick();
+           fixture.detectChanges();
+
+           expect(sortedClassList(input)).toEqual(['ng-dirty', 'ng-touched', 'ng-valid']);
+         }));
 
       it('should work with single fields in parent forms', () => {
         const fixture = TestBed.createComponent(FormGroupComp);
@@ -1022,10 +1090,109 @@ export function main() {
 
         });
 
+        it('should disable all radio buttons when disable() is called', () => {
+          const fixture = TestBed.createComponent(FormControlRadioButtons);
+          const form =
+              new FormGroup({food: new FormControl('fish'), drink: new FormControl('cola')});
+          fixture.componentInstance.form = form;
+          fixture.detectChanges();
+
+          const inputs = fixture.debugElement.queryAll(By.css('input'));
+          expect(inputs[0].nativeElement.disabled).toEqual(false);
+          expect(inputs[1].nativeElement.disabled).toEqual(false);
+          expect(inputs[2].nativeElement.disabled).toEqual(false);
+          expect(inputs[3].nativeElement.disabled).toEqual(false);
+
+          form.get('food').disable();
+          expect(inputs[0].nativeElement.disabled).toEqual(true);
+          expect(inputs[1].nativeElement.disabled).toEqual(true);
+          expect(inputs[2].nativeElement.disabled).toEqual(false);
+          expect(inputs[3].nativeElement.disabled).toEqual(false);
+
+          form.disable();
+          expect(inputs[0].nativeElement.disabled).toEqual(true);
+          expect(inputs[1].nativeElement.disabled).toEqual(true);
+          expect(inputs[2].nativeElement.disabled).toEqual(true);
+          expect(inputs[3].nativeElement.disabled).toEqual(true);
+
+          form.enable();
+          expect(inputs[0].nativeElement.disabled).toEqual(false);
+          expect(inputs[1].nativeElement.disabled).toEqual(false);
+          expect(inputs[2].nativeElement.disabled).toEqual(false);
+          expect(inputs[3].nativeElement.disabled).toEqual(false);
+        });
+
+        it('should disable all radio buttons when initially disabled', () => {
+          const fixture = TestBed.createComponent(FormControlRadioButtons);
+          const form = new FormGroup({
+            food: new FormControl({value: 'fish', disabled: true}),
+            drink: new FormControl('cola')
+          });
+          fixture.componentInstance.form = form;
+          fixture.detectChanges();
+
+          const inputs = fixture.debugElement.queryAll(By.css('input'));
+          expect(inputs[0].nativeElement.disabled).toEqual(true);
+          expect(inputs[1].nativeElement.disabled).toEqual(true);
+          expect(inputs[2].nativeElement.disabled).toEqual(false);
+          expect(inputs[3].nativeElement.disabled).toEqual(false);
+        });
+
+      });
+
+      describe('should support <type=range>', () => {
+        it('with basic use case', () => {
+          const fixture = TestBed.createComponent(FormControlRangeInput);
+          const control = new FormControl(10);
+          fixture.componentInstance.control = control;
+          fixture.detectChanges();
+
+          // model -> view
+          const input = fixture.debugElement.query(By.css('input'));
+          expect(input.nativeElement.value).toEqual('10');
+
+          input.nativeElement.value = '20';
+          dispatchEvent(input.nativeElement, 'input');
+
+          // view -> model
+          expect(control.value).toEqual(20);
+        });
+
+        it('when value is cleared in the UI', () => {
+          const fixture = TestBed.createComponent(FormControlNumberInput);
+          const control = new FormControl(10, Validators.required);
+          fixture.componentInstance.control = control;
+          fixture.detectChanges();
+
+          const input = fixture.debugElement.query(By.css('input'));
+          input.nativeElement.value = '';
+          dispatchEvent(input.nativeElement, 'input');
+
+          expect(control.valid).toBe(false);
+          expect(control.value).toEqual(null);
+
+          input.nativeElement.value = '0';
+          dispatchEvent(input.nativeElement, 'input');
+
+          expect(control.valid).toBe(true);
+          expect(control.value).toEqual(0);
+        });
+
+        it('when value is cleared programmatically', () => {
+          const fixture = TestBed.createComponent(FormControlNumberInput);
+          const control = new FormControl(10);
+          fixture.componentInstance.control = control;
+          fixture.detectChanges();
+
+          control.setValue(null);
+
+          const input = fixture.debugElement.query(By.css('input'));
+          expect(input.nativeElement.value).toEqual('');
+        });
       });
 
       describe('custom value accessors', () => {
-        it('should support custom value accessors', () => {
+        it('should support basic functionality', () => {
           const fixture = TestBed.createComponent(WrappedValueForm);
           const form = new FormGroup({'login': new FormControl('aa')});
           fixture.componentInstance.form = form;
@@ -1047,7 +1214,7 @@ export function main() {
           expect(form.get('login').errors).toEqual(null);
         });
 
-        it('should support custom value accessors on non builtin input elements that fire a change event without a \'target\' property',
+        it('should support non builtin input elements that fire a change event without a \'target\' property',
            () => {
              const fixture = TestBed.createComponent(MyInputForm);
              fixture.componentInstance.form = new FormGroup({'login': new FormControl('aa')});
@@ -1061,6 +1228,27 @@ export function main() {
                expect(fixture.componentInstance.form.value).toEqual({'login': 'bb'});
              });
              input.componentInstance.dispatchChangeEvent();
+           });
+
+        it('should support custom accessors without setDisabledState - formControlName', () => {
+          const fixture = TestBed.createComponent(WrappedValueForm);
+          fixture.componentInstance.form = new FormGroup({
+            'login': new FormControl({value: 'aa', disabled: true}),
+          });
+          fixture.detectChanges();
+          expect(fixture.componentInstance.form.status).toEqual('DISABLED');
+          expect(fixture.componentInstance.form.get('login').status).toEqual('DISABLED');
+        });
+
+        it('should support custom accessors without setDisabledState - formControlDirective',
+           () => {
+             TestBed.overrideComponent(
+                 FormControlComp,
+                 {set: {template: `<input type="text" [formControl]="control" wrapped-value>`}});
+             const fixture = TestBed.createComponent(FormControlComp);
+             fixture.componentInstance.control = new FormControl({value: 'aa', disabled: true});
+             fixture.detectChanges();
+             expect(fixture.componentInstance.control.status).toEqual('DISABLED');
            });
 
       });
@@ -1124,6 +1312,24 @@ export function main() {
     });
 
     describe('validations', () => {
+      it('required validator should validate checkbox', () => {
+        const fixture = TestBed.createComponent(FormControlCheckboxRequiredValidator);
+        const control = new FormControl(false, Validators.requiredTrue);
+        fixture.componentInstance.control = control;
+        fixture.detectChanges();
+
+        const checkbox = fixture.debugElement.query(By.css('input'));
+        expect(checkbox.nativeElement.checked).toBe(false);
+        expect(control.hasError('required')).toEqual(true);
+
+        checkbox.nativeElement.checked = true;
+        dispatchEvent(checkbox.nativeElement, 'change');
+        fixture.detectChanges();
+
+        expect(checkbox.nativeElement.checked).toBe(true);
+        expect(control.hasError('required')).toEqual(false);
+      });
+
       it('should use sync validators defined in html', () => {
         const fixture = TestBed.createComponent(LoginIsEmptyWrapper);
         const form = new FormGroup({
@@ -1639,9 +1845,9 @@ class MyInput implements ControlValueAccessor {
 
 function uniqLoginAsyncValidator(expectedValue: string) {
   return (c: AbstractControl) => {
-    var resolve: (result: any) => void;
-    var promise = new Promise(res => { resolve = res; });
-    var res = (c.value == expectedValue) ? null : {'uniqLogin': true};
+    let resolve: (result: any) => void;
+    const promise = new Promise(res => { resolve = res; });
+    const res = (c.value == expectedValue) ? null : {'uniqLogin': true};
     resolve(res);
     return promise;
   };
@@ -1667,23 +1873,16 @@ class LoginIsEmptyValidator {
   }]
 })
 class UniqLoginValidator implements Validator {
-  @Input('uniq-login-validator') expected: any /** TODO #9100 */;
+  @Input('uniq-login-validator') expected: any;
 
   validate(c: AbstractControl) { return uniqLoginAsyncValidator(this.expected)(c); }
 }
 
 function sortedClassList(el: HTMLElement) {
-  var l = getDOM().classList(el);
-  ListWrapper.sort(l);
-  return l;
+  return getDOM().classList(el).sort();
 }
 
-@Component({
-  selector: 'form-control-comp',
-  template: `
-    <input type="text" [formControl]="control">
-  `
-})
+@Component({selector: 'form-control-comp', template: `<input type="text" [formControl]="control">`})
 class FormControlComp {
   control: FormControl;
 }
@@ -1691,16 +1890,15 @@ class FormControlComp {
 @Component({
   selector: 'form-group-comp',
   template: `
-    <form [formGroup]="form" (ngSubmit)="data='submitted'">
+    <form [formGroup]="form" (ngSubmit)="event=$event">
       <input type="text" formControlName="login">
-    </form>
-  `
+    </form>`
 })
 class FormGroupComp {
   control: FormControl;
   form: FormGroup;
   myGroup: FormGroup;
-  data: string;
+  event: Event;
 }
 
 @Component({
@@ -1712,8 +1910,7 @@ class FormGroupComp {
         <input formControlName="password">
       </div>
       <input *ngIf="form.contains('email')" formControlName="email">
-    </form>
-  `
+    </form>`
 })
 class NestedFormGroupComp {
   form: FormGroup;
@@ -1721,11 +1918,17 @@ class NestedFormGroupComp {
 
 @Component({
   selector: 'form-control-number-input',
-  template: `
-    <input type="number" [formControl]="control">
-  `
+  template: `<input type="number" [formControl]="control">`
 })
 class FormControlNumberInput {
+  control: FormControl;
+}
+
+@Component({
+  selector: 'form-control-range-input',
+  template: `<input type="range" [formControl]="control">`
+})
+class FormControlRangeInput {
   control: FormControl;
 }
 
@@ -1739,8 +1942,7 @@ class FormControlNumberInput {
     <input type="radio" formControlName="drink" value="sprite">
   </form>
   <input type="radio" [formControl]="showRadio" value="yes">
-  <input type="radio" [formControl]="showRadio" value="no">
-  `
+  <input type="radio" [formControl]="showRadio" value="no">`
 })
 class FormControlRadioButtons {
   form: FormGroup;
@@ -1756,8 +1958,7 @@ class FormControlRadioButtons {
           <input [formControlName]="i">
         </div>
       </div>
-     </div>
-  `
+     </div>`
 })
 class FormArrayComp {
   form: FormGroup;
@@ -1774,8 +1975,7 @@ class FormArrayComp {
           <input formControlName="state">
         </div>
       </div>
-     </div>
-  `
+     </div>`
 })
 class FormArrayNestedGroup {
   form: FormGroup;
@@ -1789,8 +1989,7 @@ class FormArrayNestedGroup {
       <select formControlName="city">
         <option *ngFor="let c of cities" [value]="c"></option>
       </select>
-    </div>
-  `
+    </div>`
 })
 class FormControlNameSelect {
   cities = ['SF', 'NY'];
@@ -1802,8 +2001,7 @@ class FormControlNameSelect {
   template: `
    <div [formGroup]="form">
     <input type="text" formControlName="login" wrapped-value>
-  </div>
-  `
+  </div>`
 })
 class WrappedValueForm {
   form: FormGroup;
@@ -1814,8 +2012,7 @@ class WrappedValueForm {
   template: `
    <div [formGroup]="form">
       <my-input formControlName="login"></my-input>
-   </div>
-  `
+   </div>`
 })
 class MyInputForm {
   form: FormGroup;
@@ -1826,8 +2023,7 @@ class MyInputForm {
   template: `
   <div [formGroup]="form">
     <input type="text" formControlName="login" [(ngModel)]="login">
-   </div>
-  `
+   </div>`
 })
 class FormGroupNgModel {
   form: FormGroup;
@@ -1836,9 +2032,7 @@ class FormGroupNgModel {
 
 @Component({
   selector: 'form-control-ng-model',
-  template: `
-    <input type="text" [formControl]="control" [(ngModel)]="login">
-  `
+  template: `<input type="text" [formControl]="control" [(ngModel)]="login">`
 })
 class FormControlNgModel {
   control: FormControl;
@@ -1853,8 +2047,7 @@ class FormControlNgModel {
       <input type="text" formControlName="min" minlength="3">
       <input type="text" formControlName="max" maxlength="3">
       <input type="text" formControlName="pattern" pattern=".{3,}">
-   </div>
-  `
+   </div>`
 })
 class LoginIsEmptyWrapper {
   form: FormGroup;
@@ -1868,8 +2061,7 @@ class LoginIsEmptyWrapper {
       <input name="minlength" type="text" formControlName="min" [minlength]="minLen">
       <input name="maxlength" type="text" formControlName="max" [maxlength]="maxLen">
       <input name="pattern" type="text" formControlName="pattern" [pattern]="pattern">
-   </div>
-  `
+   </div>`
 })
 class ValidationBindingsForm {
   form: FormGroup;
@@ -1880,12 +2072,19 @@ class ValidationBindingsForm {
 }
 
 @Component({
+  selector: 'form-control-checkbox-validator',
+  template: `<input type="checkbox" [formControl]="control">`
+})
+class FormControlCheckboxRequiredValidator {
+  control: FormControl;
+}
+
+@Component({
   selector: 'uniq-login-wrapper',
   template: `
   <div [formGroup]="form">
     <input type="text" formControlName="login" uniq-login-validator="expected">
-  </div>
-  `
+  </div>`
 })
 class UniqLoginWrapper {
   form: FormGroup;

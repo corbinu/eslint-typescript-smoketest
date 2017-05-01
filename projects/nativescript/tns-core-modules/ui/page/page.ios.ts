@@ -1,10 +1,11 @@
-﻿import pageCommon = require("./page-common");
-import {View} from "ui/core/view";
+﻿import application = require("application");
+import pageCommon = require("./page-common");
+import { View } from "ui/core/view";
 import trace = require("trace");
 import uiUtils = require("ui/utils");
-import {device} from "platform";
-import {DeviceType} from "ui/enums";
-
+import { device } from "platform";
+import { DeviceType } from "ui/enums";
+import style = require("ui/styling/style");
 import * as utils from "utils/utils";
 import getter = utils.ios.getter;
 
@@ -56,11 +57,13 @@ class UIViewControllerImpl extends UIViewController {
 
     public isBackstackSkipped: boolean;
     public isBackstackCleared: boolean;
+    public shown: boolean;
 
     public static initWithOwner(owner: WeakRef<Page>): UIViewControllerImpl {
         let controller = <UIViewControllerImpl>UIViewControllerImpl.new();
         controller._owner = owner;
         controller.automaticallyAdjustsScrollViewInsets = false;
+        controller.shown = false;
         return controller;
     }
 
@@ -130,16 +133,19 @@ class UIViewControllerImpl extends UIViewController {
             }
         }
         else {
+            if (!application.ios.window) {
+                uiUtils.ios._layoutRootView(owner, utils.ios.getter(UIScreen, UIScreen.mainScreen).bounds);
+            }
             owner._updateLayout();
         }
     }
 
     public viewWillAppear(animated: boolean): void {
+        super.viewWillAppear(animated);
+        this.shown = false;
         let page = this._owner.get();
         if (trace.enabled) {
-            if (trace.enabled) {
-                trace.write(page + " viewWillAppear", trace.categories.Navigation);
-            }
+            trace.write(page + " viewWillAppear", trace.categories.Navigation);
         }
         if (!page) {
             return;
@@ -153,6 +159,8 @@ class UIViewControllerImpl extends UIViewController {
             let isBack = isBackNavigationTo(page, newEntry);
             page.onNavigatingTo(newEntry.entry.context, isBack, newEntry.entry.bindingContext);
         }
+
+        page._enableLoadedEvents = true;
 
         if (frame) {
             if (!page.parent) {
@@ -174,7 +182,6 @@ class UIViewControllerImpl extends UIViewController {
         //https://github.com/NativeScript/NativeScript/issues/1201
         page._viewWillDisappear = false;
 
-        page._enableLoadedEvents = true;
         // Pages in backstack are unloaded so raise loaded here.
         if (!page.isLoaded) {
             page.onLoaded();
@@ -184,6 +191,8 @@ class UIViewControllerImpl extends UIViewController {
     }
 
     public viewDidAppear(animated: boolean): void {
+        super.viewDidAppear(animated);
+        this.shown = true;
         let page = this._owner.get();
         if (trace.enabled) {
             trace.write(page + " viewDidAppear", trace.categories.Navigation);
@@ -216,7 +225,12 @@ class UIViewControllerImpl extends UIViewController {
             frame.ios.controller.delegate = this[DELEGATE];
 
             // Workaround for disabled backswipe on second custom native transition
-            this.navigationController.interactivePopGestureRecognizer.delegate = this.navigationController;
+            if (frame.canGoBack()) {
+                this.navigationController.interactivePopGestureRecognizer.delegate = this.navigationController;
+                this.navigationController.interactivePopGestureRecognizer.enabled = page.enableSwipeBackNavigation;
+            } else {
+                this.navigationController.interactivePopGestureRecognizer.enabled = false;
+            }
 
             frame._processNavigationQueue(page);
         }
@@ -224,7 +238,7 @@ class UIViewControllerImpl extends UIViewController {
         if (!this.presentedViewController) {
             // clear presented viewController here only if no presented controller.
             // this is needed because in iOS9 the order of events could be - willAppear, willDisappear, didAppear.
-            // If we clean it when we have viewController then once presented VC is dismissed then 
+            // If we clean it when we have viewController then once presented VC is dismissed then
             page._presentedViewController = null;
         }
     };
@@ -238,7 +252,7 @@ class UIViewControllerImpl extends UIViewController {
             return;
         }
 
-        // Cache presentedViewController if any. We don't want to raise 
+        // Cache presentedViewController if any. We don't want to raise
         // navigation events in case of presenting view controller.
         if (!page._presentedViewController) {
             page._presentedViewController = this.presentedViewController;
@@ -308,7 +322,7 @@ class UIViewControllerImpl extends UIViewController {
 }
 
 export class Page extends pageCommon.Page {
-    private _ios: UIViewController = UIViewControllerImpl.initWithOwner(new WeakRef(this));
+    private _ios: UIViewControllerImpl = UIViewControllerImpl.initWithOwner(new WeakRef(this));
     public _enableLoadedEvents: boolean;
     public _modalParent: Page;
     public _UIModalPresentationFormSheet: boolean;
@@ -333,7 +347,7 @@ export class Page extends pageCommon.Page {
         if (this._enableLoadedEvents) {
             super.onLoaded();
         }
-        this._updateActionBar(false);
+        this._updateActionBar();
     }
 
     public onUnloaded() {
@@ -417,14 +431,39 @@ export class Page extends pageCommon.Page {
         super._hideNativeModalView(parent);
     }
 
-    public _updateActionBar(hidden: boolean) {
+    public _updateActionBar(disableNavBarAnimation: boolean = false) {
         const frame = this.frame;
         if (frame) {
-            frame._updateActionBar(this);
+            frame._updateActionBar(this, disableNavBarAnimation);
+        }
+    }
+
+    public updateStatusBar() {
+        this._updateStatusBarStyle(this.statusBarStyle);
+    }
+
+    public _updateStatusBarStyle(value?: string) {
+        const frame = this.frame;
+        if (this.frame && value) {
+            let navigationController = frame.ios.controller;
+            let navigationBar = navigationController.navigationBar;
+
+            navigationBar.barStyle = value === "dark" ? 1 : 0;
+        }
+    }
+
+    public _updateEnableSwipeBackNavigation(enabled: boolean) {
+        const navController = this._ios.navigationController;
+        if (this.frame && navController && navController.interactivePopGestureRecognizer) {
+            // Make sure we don't set true if cannot go back
+            enabled = enabled && this.frame.canGoBack();
+            navController.interactivePopGestureRecognizer.enabled = enabled;
         }
     }
 
     public onMeasure(widthMeasureSpec: number, heightMeasureSpec: number) {
+        View.adjustChildLayoutParams(this.layoutView, widthMeasureSpec, heightMeasureSpec);
+
         let width = utils.layout.getMeasureSpecSize(widthMeasureSpec);
         let widthMode = utils.layout.getMeasureSpecMode(widthMeasureSpec);
 
@@ -448,7 +487,7 @@ export class Page extends pageCommon.Page {
         }
 
         if (this.frame && this.frame._getNavBarVisible(this)) {
-            // Measure ActionBar with the full height. 
+            // Measure ActionBar with the full height.
             let actionBarSize = View.measureChild(this, this.actionBar, widthMeasureSpec, heightMeasureSpec);
             actionBarWidth = actionBarSize.measuredWidth;
             actionBarHeight = actionBarSize.measuredHeight;
@@ -476,6 +515,14 @@ export class Page extends pageCommon.Page {
             navigationBarHeight = this.actionBar.getMeasuredHeight();
         }
 
+        // Navigation bar height should be ignored when it is visible and not translucent
+        if (this.frame && this.frame.ios &&
+            this.frame.ios.controller.navigationBar &&
+            !this.frame.ios.controller.navigationBar.translucent &&
+            !this._ios.shown) {
+            navigationBarHeight = 0;
+        }
+
         let statusBarHeight = this.backgroundSpanUnderStatusBar ? uiUtils.ios.getStatusBarHeight() : 0;
 
         // If this page is inside nested frame - don't substract statusBarHeight again.
@@ -489,6 +536,8 @@ export class Page extends pageCommon.Page {
         }
 
         View.layoutChild(this, this.layoutView, 0, navigationBarHeight + statusBarHeight, right - left, bottom - top);
+
+        View.restoreChildOriginalParams(this.layoutView);
     }
 
     public _addViewToNativeVisualTree(view: View): boolean {
@@ -500,3 +549,30 @@ export class Page extends pageCommon.Page {
         return super._addViewToNativeVisualTree(view);
     }
 }
+
+export class PageStyler implements style.Styler {
+    // statusBarStyle
+    private static setStatusBarStyleProperty(v: View, newValue: any) {
+        let page = <Page>v;
+        page._updateStatusBarStyle(newValue);
+    }
+
+    private static resetStatusBarStyleProperty(v: View, nativeValue: any) {
+        let page = <Page>v;
+        page._updateStatusBarStyle(nativeValue);
+    }
+
+    private static getStatusBarStyleProperty(v: View): any {
+        let page = <Page>v;
+        return page.statusBarStyle;
+    }
+
+    public static registerHandlers() {
+        style.registerHandler(style.statusBarStyleProperty, new style.StylePropertyChangedHandler(
+            PageStyler.setStatusBarStyleProperty,
+            PageStyler.resetStatusBarStyleProperty,
+            PageStyler.getStatusBarStyleProperty), "Page");
+    }
+}
+
+PageStyler.registerHandlers();
