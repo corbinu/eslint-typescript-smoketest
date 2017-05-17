@@ -64,6 +64,8 @@
   },
   "homepage": "https://gitlab.com/corbinu/eslint-typescript-parser#README",
   "dependencies": {
-    "shelljs": "^0.7.6"
+    "eslint-plugin-typescript": "git+https://github.com/corbinu/eslint-plugin-typescript.git#smoke",
+    "shelljs": "^0.7.6",
+    "typescript-eslint-parser": "git+https://github.com/eslint/typescript-eslint-parser.git"
   }
 }
