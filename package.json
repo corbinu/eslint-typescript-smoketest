@@ -5,7 +5,7 @@
   "main": "index.js",
   "devDependencies": {
     "copy": "^0.3.0",
-    "eslint": "4.0.0-alpha.1",
+    "eslint": "4.0.0-beta.0",
     "eslint-plugin-import": "^2.2.0",
     "eslint-plugin-lodash": "^2.3.5",
     "eslint-plugin-mysticatea": "^4.1.0",
@@ -15,7 +15,7 @@
     "eslint-plugin-typescript": "git+https://github.com/corbinu/eslint-plugin-typescript.git#smoke",
     "eslint-plugin-unicorn": "^2.0.1",
     "fs-extra": "^3.0.0",
-    "typescript": "^2.2.0",
+    "typescript": "~2.3.0",
     "typescript-eslint-parser": "git+https://github.com/eslint/typescript-eslint-parser.git"
   },
   "scripts": {
@@ -64,8 +64,6 @@
   },
   "homepage": "https://gitlab.com/corbinu/eslint-typescript-parser#README",
   "dependencies": {
-    "eslint-plugin-typescript": "git+https://github.com/corbinu/eslint-plugin-typescript.git#smoke",
-    "shelljs": "^0.7.6",
-    "typescript-eslint-parser": "git+https://github.com/eslint/typescript-eslint-parser.git"
+    "shelljs": "^0.7.7"
   }
 }
