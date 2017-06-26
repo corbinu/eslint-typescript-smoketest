@@ -6,7 +6,7 @@
   "devDependencies": {
     "@corbinu/eslint-plugin-typescript": "~0.2.0",
     "copy": "^0.3.0",
-    "eslint": "^4.0.0",
+    "eslint": "^4.1.1",
     "eslint-plugin-import": "^2.2.0",
     "eslint-plugin-lodash": "^2.3.5",
     "eslint-plugin-mysticatea": "^4.1.0",
